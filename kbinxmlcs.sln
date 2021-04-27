@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kbinxmlcs", "kbinxmlcs\kbinxmlcs.csproj", "{967E5FD7-E971-4C5F-9170-7008DA38DBC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kbinxmlcs", "kbinxmlcs\kbinxmlcs.csproj", "{967E5FD7-E971-4C5F-9170-7008DA38DBC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kbinxmlcs.Test", "kbinxmlcs.Test\kbinxmlcs.Test.csproj", "{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{967E5FD7-E971-4C5F-9170-7008DA38DBC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{967E5FD7-E971-4C5F-9170-7008DA38DBC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{967E5FD7-E971-4C5F-9170-7008DA38DBC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
