@@ -12,6 +12,8 @@ namespace kbinxmlcs
     /// </summary>
     public class KbinReader
     {
+        private static readonly Type TypeControlType = typeof(ControlType);
+
         public Encoding Encoding { get; }
 
         private readonly NodeBuffer _nodeBuffer;
@@ -65,10 +67,11 @@ namespace kbinxmlcs
                 var nodeType = _nodeBuffer.ReadU8();
 
                 //Array flag is on the second bit
-                var array = (nodeType & 64) > 0;
-                nodeType = (byte)(nodeType & ~64);
+                var array = (nodeType & 0x40) > 0;
+                nodeType = (byte)(nodeType & ~0x40);
+                NodeType propertyType;
 
-                if (Enum.IsDefined(typeof(ControlType), nodeType))
+                if (Enum.IsDefined(TypeControlType, nodeType))
                 {
                     switch ((ControlType)nodeType)
                     {
@@ -109,9 +112,11 @@ namespace kbinxmlcs
                     attribute.Value = propertyType.Name;
                     _currentElement.Attributes.Append(attribute);
 
-                    var arraySize = propertyType.Size * propertyType.Count;
+                    int arraySize;
                     if (array || propertyType.Name == "str" || propertyType.Name == "bin")
                         arraySize = _dataBuffer.ReadS32(); //Total size.
+                    else
+                        arraySize = propertyType.Size * propertyType.Count;
 
                     if (propertyType.Name == "str")
                         _currentElement.InnerText = _dataBuffer.ReadString(arraySize);
@@ -127,14 +132,18 @@ namespace kbinxmlcs
                             var size = (arraySize / (propertyType.Size * propertyType.Count)).ToString();
                             _currentElement.SetAttribute("__count", size);
                         }
-                        var buffer = _dataBuffer.ReadBytes(arraySize);
-                        var result = new List<string>();
 
-                        for (var i = 0; i < arraySize / propertyType.Size; i++)
-                            result.Add(propertyType.ToString(buffer.Skip(i * propertyType.Size)
-                                .Take(propertyType.Size).ToArray()));
-                        _currentElement.InnerText = string.Join(" ", result);
-
+                        var span = new Span<byte>(_dataBuffer.ReadBytes(arraySize));
+                        var stringBuilder = new StringBuilder();
+                        var loopCount = arraySize / propertyType.Size;
+                        for (var i = 0; i < loopCount; i++)
+                        {
+                            var subSpan = span.Slice(i * propertyType.Size, propertyType.Size);
+                            stringBuilder.Append(propertyType.GetString(subSpan.ToArray()));
+                            if (i != loopCount - 1) stringBuilder.Append(" ");
+                        }
+                        
+                        _currentElement.InnerText = stringBuilder.ToString();
                     }
                 }
                 else
