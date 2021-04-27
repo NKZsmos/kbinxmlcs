@@ -95,14 +95,10 @@ namespace kbinxmlcs
                         size *= uint.Parse(sizeStr);
                         _dataBuffer.WriteU32(size);
                     }
-
-                    var values = new List<byte>();
-
+                    
                     var loopCount = size / type.Size;
                     for (var i = 0; i < loopCount; i++)
-                        values.AddRange(type.GetBytes(value[i]));
-
-                    _dataBuffer.WriteBytes(values.ToArray());
+                        _dataBuffer.WriteBytes(type.GetBytes(value[i]));
                 }
             }
 

@@ -1,31 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace kbinxmlcs
 {
     internal class BigEndianBinaryBuffer
     {
-        protected List<byte> Buffer;
-        protected int Offset = 0;
+        //protected List<byte> Buffer;
+        //protected int Offset = 0;
+        protected MemoryStream _stream;
 
-        internal BigEndianBinaryBuffer(byte[] buffer) => Buffer = new List<byte>(buffer);
+        internal BigEndianBinaryBuffer(byte[] buffer)
+        {
+            _stream = new MemoryStream(buffer);
+        }
 
-        internal BigEndianBinaryBuffer() => Buffer = new List<byte>();
+        internal BigEndianBinaryBuffer()
+        {
+            _stream = new MemoryStream();
+        }
 
         internal virtual byte[] ReadBytes(int count)
         {
             var buffer = new byte[count];
-            Buffer.CopyTo(Offset, buffer, 0, count);
-            Offset += count;
+            _stream.Read(buffer, 0, count);
 
             return buffer;
         }
 
-        internal virtual void WriteBytes(byte[] buffer)
+        internal virtual void WriteBytes(Span<byte> buffer)
         {
-            Buffer.InsertRange(Offset, buffer);
-            Offset += buffer.Length;
+            _stream.Write(buffer.ToArray(), 0, buffer.Length);
         }
 
         internal virtual void WriteS8(sbyte value) => WriteBytes(new byte[] { (byte)value });
@@ -59,17 +65,20 @@ namespace kbinxmlcs
         internal virtual uint ReadU32() => BitConverterHelper.GetBigEndianUInt32(ReadBytes(sizeof(int)));
 
         internal virtual ulong ReadU64() => BitConverterHelper.GetBigEndianUInt64(ReadBytes(sizeof(long)));
-        
+
         internal void Pad()
         {
-            while (Buffer.Count % 4 != 0)
-                Buffer.Add(0);
+            while (_stream.Length % 4 != 0)
+                _stream.WriteByte(0);
         }
 
-        internal byte[] ToArray() => Buffer.ToArray();
+        internal byte[] ToArray()
+        {
+            return _stream.ToArray();
+        }
 
-        internal int Length => Buffer.Count;
+        internal int Length => (int) _stream.Length;
 
-        internal byte this[int index] => Buffer[index];
+        //internal byte this[int index] => Buffer[index];
     }
 }

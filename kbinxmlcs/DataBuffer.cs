@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -13,12 +14,13 @@ namespace kbinxmlcs
 
         internal DataBuffer(byte[] buffer, Encoding encoding)
         {
-            Buffer = buffer.ToList();
+            _stream = new MemoryStream(buffer);
             _encoding = encoding;
         }
 
         internal DataBuffer(Encoding encoding)
         {
+            _stream = new MemoryStream();
             _encoding = encoding;
         }
 
@@ -75,7 +77,7 @@ namespace kbinxmlcs
             return result;
         }
 
-        public void Write32BitAligned(byte[] buffer)
+        public void Write32BitAligned(Span<byte> buffer)
         {
             while (_pos32 > Buffer.Count())
                 Buffer.Add(0);
@@ -87,7 +89,7 @@ namespace kbinxmlcs
             Realign16_8();
         }
 
-        internal void Write16BitAligned(byte[] buffer)
+        internal void Write16BitAligned(Span<byte> buffer)
         {
             while (_pos16 > Buffer.Count())
                 Buffer.Add(0);
@@ -126,7 +128,7 @@ namespace kbinxmlcs
             }
         }
 
-        internal override void WriteBytes(byte[] buffer)
+        internal override void WriteBytes(Span<byte> buffer)
         {
             switch (buffer.Length)
             {
@@ -165,7 +167,7 @@ namespace kbinxmlcs
 
         internal string ReadBinary(int count) => BitConverter.ToString(Read32BitAligned(count)).Replace("-", "").ToLower();
 
-        private void SetRange(byte[] buffer, ref int offset)
+        private void SetRange(Span<byte> buffer, ref int offset)
         {
             if (offset == Buffer.Count())
             {
