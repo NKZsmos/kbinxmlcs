@@ -16,10 +16,10 @@ namespace kbinxmlcs
             return xDocument.Declaration + Environment.NewLine + xDocument.ToString(options);
         }
 
-        public static KbinWriter FromKbinEncoding(XNode node, KbinEncodings enumencoding)
+        public static Encoding ToEncoding(this KbinEncodings kbinEncoding)
         {
             Encoding encoding = null;
-            switch (enumencoding)
+            switch (kbinEncoding)
             {
                 case KbinEncodings.ShiftJIS:
                     encoding = Encoding.GetEncoding("shift_jis");
@@ -40,7 +40,7 @@ namespace kbinxmlcs
                     break;
             }
 
-            return new KbinWriter(node, encoding);
+            return encoding;
         }
     }
 }

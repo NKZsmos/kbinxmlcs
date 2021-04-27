@@ -46,34 +46,20 @@ namespace kbinxmlcs
 
         internal virtual sbyte ReadS8() => (sbyte)ReadBytes(sizeof(byte))[0];
 
-        internal virtual short ReadS16() => BitConverter.ToInt16(ReadReverse(sizeof(short)), 0);
+        internal virtual short ReadS16() => BitConverterHelper.GetBigEndianInt16(ReadBytes(sizeof(short)));
 
-        internal virtual int ReadS32() => BitConverter.ToInt32(ReadReverse(sizeof(int)), 0);
+        internal virtual int ReadS32() => BitConverterHelper.GetBigEndianInt32(ReadBytes(sizeof(int)));
 
-        internal virtual long ReadS64() => BitConverter.ToInt64(ReadReverse(sizeof(short)), 0);
+        internal virtual long ReadS64() => BitConverterHelper.GetBigEndianInt64(ReadBytes(sizeof(short)));
 
         internal virtual byte ReadU8() => ReadBytes(sizeof(byte))[0];
 
-        internal virtual ushort ReadU16() => BitConverter.ToUInt16(ReadReverse(sizeof(short)), 0);
+        internal virtual ushort ReadU16() => BitConverterHelper.GetBigEndianUInt16(ReadBytes(sizeof(short)));
 
-        internal virtual uint ReadU32() => BitConverter.ToUInt32(ReadReverse(sizeof(int)), 0);
+        internal virtual uint ReadU32() => BitConverterHelper.GetBigEndianUInt32(ReadBytes(sizeof(int)));
 
-        internal virtual ulong ReadU64() => BitConverter.ToUInt64(ReadReverse(sizeof(long)), 0);
-
-        private void WriteReverse(byte[] buffer)
-        {
-            Array.Reverse(buffer);
-            WriteBytes(buffer);
-        }
-
-        private byte[] ReadReverse(int count)
-        {
-            var buffer = ReadBytes(count);
-            Array.Reverse(buffer);
-
-            return buffer;
-        }
-
+        internal virtual ulong ReadU64() => BitConverterHelper.GetBigEndianUInt64(ReadBytes(sizeof(long)));
+        
         internal void Pad()
         {
             while (Buffer.Count % 4 != 0)
@@ -82,13 +68,7 @@ namespace kbinxmlcs
 
         internal byte[] ToArray() => Buffer.ToArray();
 
-        internal int Length
-        {
-            get
-            {
-                return Buffer.Count();
-            }
-        }
+        internal int Length => Buffer.Count;
 
         internal byte this[int index] => Buffer[index];
     }
