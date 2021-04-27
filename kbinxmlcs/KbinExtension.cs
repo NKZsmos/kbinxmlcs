@@ -6,7 +6,7 @@ namespace kbinxmlcs
 {
     public static class KbinExtension
     {
-        public static string ToFullString(this XDocument xDocument, SaveOptions options = SaveOptions.DisableFormatting)
+        public static string ToStringWithDeclaration(this XDocument xDocument, SaveOptions options = SaveOptions.DisableFormatting)
         {
             if (options == SaveOptions.DisableFormatting)
             {
