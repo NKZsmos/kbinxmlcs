@@ -154,8 +154,8 @@ namespace kbinxmlcs
 
         internal string ReadString(int count) => _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
 
-       private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length).Where(x => x % 2 == 0)
-            .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber)).ToArray();
+        private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length).Where(x => x % 2 == 0)
+             .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber)).ToArray();
 
         internal void WriteBinary(string value)
         {

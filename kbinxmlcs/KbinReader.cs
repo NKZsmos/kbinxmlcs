@@ -21,7 +21,7 @@ namespace kbinxmlcs
         private XmlElement _currentElement;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="XmlReader"/> class.
+        /// Initializes a new instance of the <see cref="KbinReader"/> class.
         /// </summary>
         /// <param name="buffer">An array of bytes containing the contents of a binary XML.</param>
         public KbinReader(byte[] buffer)
@@ -53,7 +53,7 @@ namespace kbinxmlcs
 
             _xmlDocument.InsertBefore(_xmlDocument.CreateXmlDeclaration("1.0", Encoding.WebName, null), _xmlDocument.DocumentElement);
         }
-        
+
         /// <summary>
         /// Reads all nodes in the binary XML.
         /// </summary>
@@ -133,8 +133,8 @@ namespace kbinxmlcs
                         for (var i = 0; i < arraySize / propertyType.Size; i++)
                             result.Add(propertyType.ToString(buffer.Skip(i * propertyType.Size)
                                 .Take(propertyType.Size).ToArray()));
-                        _currentElement.InnerText = string.Join(' ', result);
-                        
+                        _currentElement.InnerText = string.Join(" ", result);
+
                     }
                 }
                 else

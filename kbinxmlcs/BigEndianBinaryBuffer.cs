@@ -7,7 +7,7 @@ namespace kbinxmlcs
     internal class BigEndianBinaryBuffer
     {
         protected List<byte> Buffer;
-        protected int Offset;
+        protected int Offset = 0;
 
         internal BigEndianBinaryBuffer(byte[] buffer) => Buffer = new List<byte>(buffer);
 
@@ -54,7 +54,7 @@ namespace kbinxmlcs
 
         internal virtual byte ReadU8() => ReadBytes(sizeof(byte))[0];
 
-        internal virtual ushort ReadU16() => BitConverter.ToUInt16(ReadBytes(sizeof(short)).Reverse().ToArray(), 0);
+        internal virtual ushort ReadU16() => BitConverter.ToUInt16(ReadReverse(sizeof(short)), 0);
 
         internal virtual uint ReadU32() => BitConverter.ToUInt32(ReadReverse(sizeof(int)), 0);
 
@@ -82,7 +82,13 @@ namespace kbinxmlcs
 
         internal byte[] ToArray() => Buffer.ToArray();
 
-        internal int Length => Buffer.Count();
+        internal int Length
+        {
+            get
+            {
+                return Buffer.Count();
+            }
+        }
 
         internal byte this[int index] => Buffer[index];
     }

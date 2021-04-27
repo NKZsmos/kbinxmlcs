@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using System.Linq;
 
 namespace kbinxmlcs
 {
@@ -18,9 +18,9 @@ namespace kbinxmlcs
         private readonly DataBuffer _dataBuffer;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="XmlWriter"/> class.
+        /// Initializes a new instance of the <see cref="KbinWriter"/> class.
         /// </summary>
-        /// <param name="xmlDocument">The XML document to be wirtten as a binary XML.</param>
+        /// <param name="document">The XML document to be written as a binary XML.</param>
         /// <param name="encoding">The encoding of the XML document.</param>
         public KbinWriter(XmlDocument document, Encoding encoding)
         {
@@ -32,15 +32,15 @@ namespace kbinxmlcs
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="XmlWriter"/> class.
+        /// Initializes a new instance of the <see cref="KbinWriter"/> class.
         /// </summary>
-        /// <param name="xNode">The XML document to be wirtten as a binary XML.</param>
+        /// <param name="xNode">The XML document to be written as a binary XML.</param>
         /// <param name="encoding">The encoding of the XML document.</param>
         public KbinWriter(XNode node, Encoding encoding)
         {
             _document = new XmlDocument();
             _document.LoadXml(node.ToString());
-            
+
             _encoding = encoding;
             _nodeBuffer = new NodeBuffer(true, encoding);
             _dataBuffer = new DataBuffer(encoding);
@@ -50,7 +50,7 @@ namespace kbinxmlcs
         /// <summary>
         /// Writes all nodes in the XML document.
         /// </summary>
-        /// <returns>Retruns an array of bytes containing the contents of the binary XML.</returns>
+        /// <returns>Returns an array of bytes containing the contents of the binary XML.</returns>
         public byte[] Write()
         {
             Recurse(_document.DocumentElement);
@@ -112,10 +112,10 @@ namespace kbinxmlcs
                     }
 
                     var values = new List<byte>();
-                    
+
                     for (var i = 0; i < size / type.Size; i++)
                         values.AddRange(type.ToBytes(value[i]));
-                    
+
                     _dataBuffer.WriteBytes(values.ToArray());
                 }
             }
