@@ -9,6 +9,7 @@ namespace kbinxmlcs
 
         internal static byte[] Encode(string input)
         {
+            // todo: improve performance
             var buffer = new byte[input.Length].Select((x, i) => (byte)Charset.IndexOf(input[i])).ToArray();
             var output = new byte[(int)Math.Ceiling(buffer.Length * 6.0 / 8)];
 
@@ -27,6 +28,7 @@ namespace kbinxmlcs
                 output[i / 6] = (byte)(output[i / 6] |
                     (((buffer[i / 8] >> (7 - (i % 8))) & 1) << (5 - (i % 6))));
 
+            // todo: improve performance
             return new string(output.Select(x => Charset[x]).ToArray());
         }
     }

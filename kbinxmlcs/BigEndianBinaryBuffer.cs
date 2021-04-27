@@ -30,19 +30,19 @@ namespace kbinxmlcs
 
         internal virtual void WriteS8(sbyte value) => WriteBytes(new byte[] { (byte)value });
 
-        internal virtual void WriteS16(short value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteS16(short value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
-        internal virtual void WriteS32(int value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteS32(int value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
-        internal virtual void WriteS64(long value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteS64(long value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
         internal virtual void WriteU8(byte value) => WriteBytes(new byte[] { value });
 
-        internal virtual void WriteU16(ushort value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteU16(ushort value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
-        internal virtual void WriteU32(uint value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteU32(uint value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
-        internal virtual void WriteU64(ulong value) => WriteReverse(BitConverter.GetBytes(value));
+        internal virtual void WriteU64(ulong value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
 
         internal virtual sbyte ReadS8() => (sbyte)ReadBytes(sizeof(byte))[0];
 

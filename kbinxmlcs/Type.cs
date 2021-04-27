@@ -19,24 +19,24 @@ namespace kbinxmlcs
             get;
         }
 
-        public StringConverter ToBytes
+        public StringToByteDelegate ToBytes
         {
             get;
         }
 
-        public new ByteConverter ToString
+        public new ByteToStringDelegate ToString
         {
             get;
         }
 
         public NodeType(int size, int count, string name, 
-            StringConverter stringConverter, ByteConverter byteConverter)
+            StringToByteDelegate stringToByteDelegate, ByteToStringDelegate byteToStringDelegate)
         {
             Size = size;
             Count = count;
             Name = name;
-            ToBytes = stringConverter;
-            ToString = byteConverter;
+            ToBytes = stringToByteDelegate;
+            ToString = byteToStringDelegate;
         }
     }
 }

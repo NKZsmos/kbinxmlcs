@@ -6,22 +6,22 @@ namespace kbinxmlcs
 {
     public static class Converters
     {
-        public delegate byte[] StringConverter(string str);
+        public delegate byte[] StringToByteDelegate(string str);
+        public delegate string ByteToStringDelegate(byte[] bytes);
 
         public static byte[] U8ToBytes(string str) => new[] { byte.Parse(str) };
         public static byte[] S8ToBytes(string str) => new[] { (byte)sbyte.Parse(str) };
-        public static byte[] U16ToBytes(string str) => BitConverter.GetBytes(ushort.Parse(str)).Reverse().ToArray();
-        public static byte[] S16ToBytes(string str) => BitConverter.GetBytes(short.Parse(str)).Reverse().ToArray();
-        public static byte[] U32ToBytes(string str) => BitConverter.GetBytes(uint.Parse(str)).Reverse().ToArray();
-        public static byte[] S32ToBytes(string str) => BitConverter.GetBytes(int.Parse(str)).Reverse().ToArray();
-        public static byte[] U64ToBytes(string str) => BitConverter.GetBytes(ulong.Parse(str)).Reverse().ToArray();
-        public static byte[] S64ToBytes(string str) => BitConverter.GetBytes(long.Parse(str)).Reverse().ToArray();
+        public static byte[] U16ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(ushort.Parse(str));
+        public static byte[] S16ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(short.Parse(str));
+        public static byte[] U32ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(uint.Parse(str));
+        public static byte[] S32ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(int.Parse(str));
+        public static byte[] U64ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(ulong.Parse(str));
+        public static byte[] S64ToBytes(string str) => BitConverterHelper.GetBigEndianBytes(long.Parse(str));
         public static byte[] Ip4ToBytes(string input) => IPAddress.Parse(input).GetAddressBytes();
-        public static byte[] SingleToBytes(string input) => BitConverter.GetBytes(float.Parse(input)).Reverse().ToArray();
-        public static byte[] DoubleToBytes(string input) => BitConverter.GetBytes(double.Parse(input)).Reverse().ToArray();
-        
-        public delegate string ByteConverter(byte[] bytes);
+        public static byte[] SingleToBytes(string input) => BitConverterHelper.GetBigEndianBytes(float.Parse(input));
+        public static byte[] DoubleToBytes(string input) => BitConverterHelper.GetBigEndianBytes(double.Parse(input));
 
+        // TODO: huge optimize
         public static string U8ToString(byte[] bytes) => bytes[0].ToString();
         public static string S8ToString(byte[] bytes) => ((sbyte)bytes[0]).ToString();
         public static string U16ToString(byte[] bytes) => BitConverter.ToUInt16(bytes.Reverse().ToArray()).ToString();
