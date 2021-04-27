@@ -19,8 +19,8 @@ namespace kbinxmlcs
         private readonly NodeBuffer _nodeBuffer;
         private readonly DataBuffer _dataBuffer;
 
-        private readonly XmlDocument _xmlDocument = new XmlDocument();
-        private XmlElement _currentElement;
+        private readonly XDocument _xDocument = new XDocument();
+        private XElement _currentElement;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KbinReader"/> class.
@@ -52,15 +52,14 @@ namespace kbinxmlcs
 
             var dataLength = BitConverter.ToInt32(buffer.Skip(nodeLength + 8).Take(4).Reverse().ToArray(), 0);
             _dataBuffer = new DataBuffer(buffer.Skip(nodeLength + 12).Take(dataLength).ToArray(), Encoding);
-
-            _xmlDocument.InsertBefore(_xmlDocument.CreateXmlDeclaration("1.0", Encoding.WebName, null), _xmlDocument.DocumentElement);
+            _xDocument.Declaration = new XDeclaration("1.0", Encoding.WebName, null);
         }
 
         /// <summary>
         /// Reads all nodes in the binary XML.
         /// </summary>
         /// <returns>Returns the XML document.</returns>
-        public XmlDocument Read()
+        public XDocument ReadLinq()
         {
             while (true)
             {
@@ -76,41 +75,36 @@ namespace kbinxmlcs
                     switch ((ControlType)nodeType)
                     {
                         case ControlType.NodeStart:
-                            var newElement = _xmlDocument.CreateElement
-                                (_nodeBuffer.ReadString(), null);
+                            var newElement = new XElement(_nodeBuffer.ReadString());
 
                             if (_currentElement != null)
-                                _currentElement.AppendChild(newElement);
+                                _currentElement.Add(newElement);
                             else
-                                _xmlDocument.AppendChild(newElement);
+                                _xDocument.Add(newElement);
 
                             _currentElement = newElement;
                             break;
 
                         case ControlType.Attribute:
                             var value = _dataBuffer.ReadString(_dataBuffer.ReadS32());
-                            _currentElement.SetAttribute(_nodeBuffer.ReadString(), value);
+                            _currentElement.SetAttributeValue(_nodeBuffer.ReadString(), value);
                             break;
 
                         case ControlType.NodeEnd:
-                            if (_currentElement.ParentNode is XmlDocument)
-                                return _xmlDocument;
-
-                            _currentElement = (XmlElement)_currentElement.ParentNode;
+                            _currentElement = _currentElement.Parent;
                             break;
 
                         case ControlType.FileEnd:
-                            return _xmlDocument;
+                            return _xDocument;
                     }
                 }
                 else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out var propertyType))
                 {
                     var elementName = _nodeBuffer.ReadString();
-                    _currentElement = (XmlElement)_currentElement.AppendChild(_xmlDocument.CreateElement(elementName));
-
-                    var attribute = _xmlDocument.CreateAttribute("__type");
-                    attribute.Value = propertyType.Name;
-                    _currentElement.Attributes.Append(attribute);
+                    var element = new XElement(elementName);
+                    _currentElement.Add(element);
+                    _currentElement = element;
+                    _currentElement.SetAttributeValue("__type", propertyType.Name);
 
                     int arraySize;
                     if (array || propertyType.Name == "str" || propertyType.Name == "bin")
@@ -119,18 +113,18 @@ namespace kbinxmlcs
                         arraySize = propertyType.Size * propertyType.Count;
 
                     if (propertyType.Name == "str")
-                        _currentElement.InnerText = _dataBuffer.ReadString(arraySize);
+                        _currentElement.Value = _dataBuffer.ReadString(arraySize);
                     else if (propertyType.Name == "bin")
                     {
-                        _currentElement.InnerText = _dataBuffer.ReadBinary(arraySize);
-                        _currentElement.SetAttribute("__size", arraySize.ToString());
+                        _currentElement.Value = _dataBuffer.ReadBinary(arraySize);
+                        _currentElement.SetAttributeValue("__size", arraySize.ToString());
                     }
                     else
                     {
                         if (array)
                         {
                             var size = (arraySize / (propertyType.Size * propertyType.Count)).ToString();
-                            _currentElement.SetAttribute("__count", size);
+                            _currentElement.SetAttributeValue("__count", size);
                         }
 
                         var span = new Span<byte>(_dataBuffer.ReadBytes(arraySize));
@@ -142,8 +136,8 @@ namespace kbinxmlcs
                             stringBuilder.Append(propertyType.GetString(subSpan.ToArray()));
                             if (i != loopCount - 1) stringBuilder.Append(" ");
                         }
-                        
-                        _currentElement.InnerText = stringBuilder.ToString();
+
+                        _currentElement.Value = stringBuilder.ToString();
                     }
                 }
                 else
@@ -153,10 +147,13 @@ namespace kbinxmlcs
             }
         }
 
-        /// <summary>
-        /// Reads all nodes in the binary XML.
-        /// </summary>
-        /// <returns>Returns the XML document.</returns>
-        public XDocument ReadLinq() => XDocument.Parse(Read().OuterXml);
+        [Obsolete("Poor performance. Use \"" + nameof(ReadLinq) + "()\" instead.")]
+        public XmlDocument Read()
+        {
+            var xDocument = ReadLinq();
+            var xmlElement = new XmlDocument();
+            xmlElement.LoadXml(xDocument.Declaration + xDocument.ToString(SaveOptions.DisableFormatting));
+            return xmlElement;
+        }
     }
 }

@@ -1,13 +1,19 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Xml.Linq;
 
 namespace kbinxmlcs
 {
     public static class KbinExtension
     {
-        public static XElement ReadXElement(this KbinReader reader)
+        public static string ToFullString(this XDocument xDocument, SaveOptions options = SaveOptions.DisableFormatting)
         {
-            return reader.ReadLinq().Root;
+            if (options == SaveOptions.DisableFormatting)
+            {
+                return xDocument.Declaration + xDocument.ToString(options);
+            }
+
+            return xDocument.Declaration + Environment.NewLine + xDocument.ToString(options);
         }
 
         public static KbinWriter FromKbinEncoding(XNode node, KbinEncodings enumencoding)
