@@ -4,39 +4,24 @@ namespace kbinxmlcs
 {
     public class NodeType
     {
-        public int Size 
-        {
-            get;
-        }
-        
-        public int Count
-        {
-            get; 
-        }
+        public int Size { get; }
 
-        public string Name
-        {
-            get;
-        }
+        public int Count { get; }
 
-        public StringToByteDelegate ToBytes
-        {
-            get;
-        }
+        public string Name { get; }
 
-        public new ByteToStringDelegate ToString
-        {
-            get;
-        }
+        public StringToByteDelegate GetBytes { get; }
 
-        public NodeType(int size, int count, string name, 
+        public ByteToStringDelegate GetString { get; }
+
+        public NodeType(int size, int count, string name,
             StringToByteDelegate stringToByteDelegate, ByteToStringDelegate byteToStringDelegate)
         {
             Size = size;
             Count = count;
             Name = name;
-            ToBytes = stringToByteDelegate;
-            ToString = byteToStringDelegate;
+            GetBytes = stringToByteDelegate;
+            GetString = byteToStringDelegate;
         }
     }
 }

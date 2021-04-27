@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -99,7 +100,7 @@ namespace kbinxmlcs
 
                     var loopCount = size / type.Size;
                     for (var i = 0; i < loopCount; i++)
-                        values.AddRange(type.ToBytes(value[i]));
+                        values.AddRange(type.GetBytes(value[i]));
 
                     _dataBuffer.WriteBytes(values.ToArray());
                 }
