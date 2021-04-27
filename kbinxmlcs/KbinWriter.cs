@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace kbinxmlcs
@@ -11,7 +10,7 @@ namespace kbinxmlcs
     /// </summary>
     public class KbinWriter
     {
-        private readonly XmlDocument _document;
+        private readonly XDocument _document;
         private readonly Encoding _encoding;
 
         private readonly NodeBuffer _nodeBuffer;
@@ -20,31 +19,15 @@ namespace kbinxmlcs
         /// <summary>
         /// Initializes a new instance of the <see cref="KbinWriter"/> class.
         /// </summary>
-        /// <param name="document">The XML document to be written as a binary XML.</param>
-        /// <param name="encoding">The encoding of the XML document.</param>
-        public KbinWriter(XmlDocument document, Encoding encoding)
-        {
-            _document = document;
-            _encoding = encoding;
-
-            _nodeBuffer = new NodeBuffer(true, encoding);
-            _dataBuffer = new DataBuffer(encoding);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="KbinWriter"/> class.
-        /// </summary>
         /// <param name="xNode">The XML document to be written as a binary XML.</param>
         /// <param name="encoding">The encoding of the XML document.</param>
-        public KbinWriter(XNode node, Encoding encoding)
+        public KbinWriter(XNode xNode, Encoding encoding)
         {
-            _document = new XmlDocument();
-            _document.LoadXml(node.ToString());
+            _document = xNode is XDocument xDoc ? xDoc : new XDocument(xNode);
 
             _encoding = encoding;
             _nodeBuffer = new NodeBuffer(true, encoding);
             _dataBuffer = new DataBuffer(encoding);
-
         }
 
         /// <summary>
@@ -53,7 +36,7 @@ namespace kbinxmlcs
         /// <returns>Returns an array of bytes containing the contents of the binary XML.</returns>
         public byte[] Write()
         {
-            Recurse(_document.DocumentElement);
+            Recurse(_document.Root);
             _nodeBuffer.WriteU8(255);
             _nodeBuffer.Pad();
             _dataBuffer.Pad();
@@ -76,67 +59,69 @@ namespace kbinxmlcs
             return output.ToArray();
         }
 
-        private void Recurse(XmlElement xmlElement)
+        private void Recurse(XElement xElement)
         {
-            var typestr = xmlElement.Attributes["__type"]?.Value;
-            var sizestr = xmlElement.Attributes["__count"]?.Value;
+            var typeStr = xElement.Attribute("__type")?.Value;
+            var sizeStr = xElement.Attribute("__count")?.Value;
 
-            if (typestr == null)
+            if (typeStr == null)
             {
                 _nodeBuffer.WriteU8(1);
-                _nodeBuffer.WriteString(xmlElement.Name);
+                _nodeBuffer.WriteString(xElement.Name.LocalName);
             }
             else
             {
-                var typeid = TypeDictionary.ReverseTypeMap[typestr];
-                if (sizestr != null)
+                var typeid = TypeDictionary.ReverseTypeMap[typeStr];
+                if (sizeStr != null)
                     _nodeBuffer.WriteU8((byte)(typeid | 0x40));
                 else
                     _nodeBuffer.WriteU8(typeid);
 
-                _nodeBuffer.WriteString(xmlElement.Name);
-                if (typestr == "str")
-                    _dataBuffer.WriteString(xmlElement.InnerText);
-                else if (typestr == "bin")
-                    _dataBuffer.WriteBinary(xmlElement.InnerText);
+                _nodeBuffer.WriteString(xElement.Name.LocalName);
+                var innerText = xElement.Value;
+                if (typeStr == "str")
+                    _dataBuffer.WriteString(innerText);
+                else if (typeStr == "bin")
+                    _dataBuffer.WriteBinary(innerText);
                 else
                 {
                     var type = TypeDictionary.TypeMap[typeid];
-                    var value = xmlElement.InnerText.Split(' ');
+                    var value = innerText.Split(' ');
                     var size = (uint)(type.Size * type.Count);
 
-                    if (sizestr != null)
+                    if (sizeStr != null)
                     {
-                        size *= uint.Parse(sizestr);
+                        size *= uint.Parse(sizeStr);
                         _dataBuffer.WriteU32(size);
                     }
 
                     var values = new List<byte>();
 
-                    for (var i = 0; i < size / type.Size; i++)
+                    var loopCount = size / type.Size;
+                    for (var i = 0; i < loopCount; i++)
                         values.AddRange(type.ToBytes(value[i]));
 
                     _dataBuffer.WriteBytes(values.ToArray());
                 }
             }
 
-            foreach (var attribute in xmlElement.Attributes.Cast<XmlAttribute>().OrderBy(x => x.Name))
+            foreach (var attribute in xElement.Attributes().OrderBy(x => x.Name.LocalName))
             {
                 if (attribute.Name != "__type" &&
                     attribute.Name != "__size" &&
                     attribute.Name != "__count")
                 {
                     _nodeBuffer.WriteU8(0x2E);
-                    _nodeBuffer.WriteString(attribute.Name);
+                    _nodeBuffer.WriteString(attribute.Name.LocalName);
                     _dataBuffer.WriteString(attribute.Value);
                 }
             }
 
-            foreach (XmlNode childNode in xmlElement.ChildNodes)
+            foreach (var childNode in xElement.Elements())
             {
-                if (childNode is XmlElement)
-                    Recurse((XmlElement)childNode);
+                Recurse(childNode);
             }
+
             _nodeBuffer.WriteU8(0xFE);
         }
     }
