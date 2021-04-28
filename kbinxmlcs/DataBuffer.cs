@@ -31,35 +31,35 @@ namespace kbinxmlcs
 
         private Span<byte> ReadBytes(ref int offset, int count)
         {
-            if (_stream.Position == offset)
+            if (Stream.Position == offset)
             {
 #if NETSTANDARD2_1
                 var span = count <= 128
                     ? stackalloc byte[count]
                     : new byte[count];
-                _stream.Read(span);
+                Stream.Read(span);
                 return span.ToArray();
 #elif NETSTANDARD2_0
                 var span = new byte[count];
-                _stream.Read(span, 0, count);
+                Stream.Read(span, 0, count);
                 return span;
 #endif
             }
             else
             {
-                var pos = _stream.Position;
-                _stream.Position = offset;
+                var pos = Stream.Position;
+                Stream.Position = offset;
 
 #if NETSTANDARD2_1
                 var span = count <= 128
                     ? stackalloc byte[count]
                     : new byte[count];
-                _stream.Read(span);
+                Stream.Read(span);
 #elif NETSTANDARD2_0
                 var span = new byte[count];
-                _stream.Read(span, 0, count);
+                Stream.Read(span, 0, count);
 #endif
-                _stream.Position = pos;
+                Stream.Position = pos;
 
 #if NETSTANDARD2_1
                 return span.ToArray();
@@ -107,8 +107,8 @@ namespace kbinxmlcs
 
         public void Write32BitAligned(Span<byte> buffer)
         {
-            while (_pos32 > _stream.Length)
-                _stream.WriteByte(0);
+            while (_pos32 > Stream.Length)
+                Stream.WriteByte(0);
 
             SetRange(buffer, ref _pos32);
             while (_pos32 % 4 != 0)
@@ -119,8 +119,8 @@ namespace kbinxmlcs
 
         public void Write16BitAligned(Span<byte> buffer)
         {
-            while (_pos16 > _stream.Length)
-                _stream.WriteByte(0);
+            while (_pos16 > Stream.Length)
+                Stream.WriteByte(0);
 
             if (_pos16 % 4 == 0)
                 _pos32 += 4;
@@ -131,8 +131,8 @@ namespace kbinxmlcs
 
         public void Write8BitAligned(byte value)
         {
-            while (_pos8 > _stream.Length)
-                _stream.WriteByte(0);
+            while (_pos8 > Stream.Length)
+                Stream.WriteByte(0);
 
             if (_pos8 % 4 == 0)
                 _pos32 += 4;
@@ -216,29 +216,29 @@ namespace kbinxmlcs
 
         private void SetRange(Span<byte> buffer, ref int offset)
         {
-            if (offset == _stream.Length)
+            if (offset == Stream.Length)
             {
 #if NETSTANDARD2_0
-                _stream.Write(buffer.ToArray(), 0, buffer.Length);
+                Stream.Write(buffer.ToArray(), 0, buffer.Length);
 #elif NETSTANDARD2_1
-                _stream.Write(buffer);
+                Stream.Write(buffer);
 #endif
                 offset += buffer.Length;
             }
             else
             {
-                var pos = _stream.Position;
-                _stream.Position = offset;
+                var pos = Stream.Position;
+                Stream.Position = offset;
 
 #if NETSTANDARD2_0
-                _stream.Write(buffer.ToArray(), 0, buffer.Length);
+                Stream.Write(buffer.ToArray(), 0, buffer.Length);
 #elif NETSTANDARD2_1
-                _stream.Write(buffer);
+                Stream.Write(buffer);
 #endif
 
                 offset += buffer.Length;
 
-                _stream.Position = pos;
+                Stream.Position = pos;
             }
         }
     }

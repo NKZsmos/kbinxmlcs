@@ -3,18 +3,18 @@ using System.IO;
 
 namespace kbinxmlcs
 {
-    public class BigEndianBinaryBuffer
+    public class BigEndianBinaryBuffer : IDisposable
     {
-        protected Stream _stream;
+        protected readonly Stream Stream;
 
         public BigEndianBinaryBuffer(byte[] buffer)
         {
-            _stream = new MemoryStream(buffer);
+            Stream = new MemoryStream(buffer);
         }
 
         public BigEndianBinaryBuffer()
         {
-            _stream = new MemoryStream();
+            Stream = new MemoryStream();
         }
 
         public virtual Span<byte> ReadBytes(int count)
@@ -23,11 +23,11 @@ namespace kbinxmlcs
             var span = count <= 128
                 ? stackalloc byte[count]
                 : new byte[count];
-            _stream.Read(span);
+            Stream.Read(span);
             return span.ToArray();
 #elif NETSTANDARD2_0
             var buffer = new byte[count];
-            _stream.Read(buffer, 0, count);
+            Stream.Read(buffer, 0, count);
             return buffer;
 #endif
         }
@@ -35,9 +35,9 @@ namespace kbinxmlcs
         public virtual void WriteBytes(Span<byte> buffer)
         {
 #if NETSTANDARD2_1
-            _stream.Write(buffer);
+            Stream.Write(buffer);
 #elif NETSTANDARD2_0
-            _stream.Write(buffer.ToArray(), 0, buffer.Length);
+            Stream.Write(buffer.ToArray(), 0, buffer.Length);
 #endif
         }
 
@@ -75,21 +75,21 @@ namespace kbinxmlcs
 
         internal void Pad()
         {
-            while (_stream.Length % 4 != 0)
-                _stream.WriteByte(0);
+            while (Stream.Length % 4 != 0)
+                Stream.WriteByte(0);
         }
 
         public byte[] ToArray()
         {
-            if (_stream is MemoryStream ms1)
+            if (Stream is MemoryStream ms1)
                 return ms1.ToArray();
 
-            _stream.Position = 0;
+            Stream.Position = 0;
             byte[] buffer = new byte[16 * 1024];
             using (var ms = new MemoryStream())
             {
                 int read;
-                while ((read = _stream.Read(buffer, 0, buffer.Length)) > 0)
+                while ((read = Stream.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     ms.Write(buffer, 0, read);
                 }
@@ -98,6 +98,11 @@ namespace kbinxmlcs
             }
         }
 
-        public int Length => (int)_stream.Length;
+        public int Length => (int)Stream.Length;
+
+        public void Dispose()
+        {
+            Stream?.Dispose();
+        }
     }
 }
