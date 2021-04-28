@@ -19,7 +19,7 @@ namespace kbinxmlcs
 
         public virtual Span<byte> ReadBytes(int count)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             var span = count <= 128
                 ? stackalloc byte[count]
                 : new byte[count];
@@ -34,7 +34,7 @@ namespace kbinxmlcs
 
         public virtual void WriteBytes(Span<byte> buffer)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             Stream.Write(buffer);
 #elif NETSTANDARD2_0
             Stream.Write(buffer.ToArray(), 0, buffer.Length);

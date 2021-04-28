@@ -42,7 +42,7 @@ namespace kbinxmlcs
             if (_compressed)
                 return Sixbit.Decode(ReadBytes((int)Math.Ceiling(length * 6 / 8.0)), length);
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             return _encoding.GetString(ReadBytes((length & 0xBF) + 1));
 #elif NETSTANDARD2_0
             return _encoding.GetString(ReadBytes((length & 0xBF) + 1).ToArray());

@@ -36,7 +36,7 @@ namespace kbinxmlcs
         }
         public static float GetBigEndianSingle(Span<byte> value)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             return BinaryPrimitivesExt.ReadSingleBigEndian(value);
 #elif NETSTANDARD2_0
             var arr = ReverseArray(value);
@@ -107,7 +107,7 @@ namespace kbinxmlcs
 
         public static Span<byte> GetBigEndianBytes(float value)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             var length = sizeof(float);
             Span<byte> span = stackalloc byte[length];
             BinaryPrimitivesExt.WriteSingleBigEndian(span, value);

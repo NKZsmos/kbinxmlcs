@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -9,7 +8,7 @@ namespace kbinxmlcs
     /// <summary>
     /// Represents a writer for Konami's binary XML format.
     /// </summary>
-    public class KbinWriter
+    public class KbinWriter : IDisposable
     {
         private readonly XDocument _document;
         private readonly Encoding _encoding;
@@ -43,23 +42,25 @@ namespace kbinxmlcs
             _dataBuffer.Pad();
 
             //Write header data
-            var output = new BigEndianBinaryBuffer();
-            output.WriteU8(0xA0); //Magic
-            output.WriteU8(0x42); //Compression flag
-            output.WriteU8(EncodingDictionary.ReverseEncodingMap[_encoding]);
-            output.WriteU8((byte)~EncodingDictionary.ReverseEncodingMap[_encoding]);
+            using (var output = new BigEndianBinaryBuffer())
+            {
+                output.WriteU8(0xA0); //Magic
+                output.WriteU8(0x42); //Compression flag
+                output.WriteU8(EncodingDictionary.ReverseEncodingMap[_encoding]);
+                output.WriteU8((byte)~EncodingDictionary.ReverseEncodingMap[_encoding]);
 
-            //Write node buffer length and contents.
-            var buffer = _nodeBuffer.ToArray();
-            output.WriteS32(buffer.Length);
-            output.WriteBytes(buffer);
+                //Write node buffer length and contents.
+                var buffer = _nodeBuffer.ToArray();
+                output.WriteS32(buffer.Length);
+                output.WriteBytes(buffer);
 
-            //Write data buffer length and contents.
-            var array = _dataBuffer.ToArray();
-            output.WriteS32(array.Length);
-            output.WriteBytes(array);
+                //Write data buffer length and contents.
+                var array = _dataBuffer.ToArray();
+                output.WriteS32(array.Length);
+                output.WriteBytes(array);
 
-            return output.ToArray();
+                return output.ToArray();
+            }
         }
 
         private void Recurse(XElement xElement)
@@ -97,7 +98,7 @@ namespace kbinxmlcs
                         size *= uint.Parse(sizeStr);
                         _dataBuffer.WriteU32(size);
                     }
-                    
+
                     var loopCount = size / type.Size;
                     for (var i = 0; i < loopCount; i++)
                         _dataBuffer.WriteBytes(type.GetBytes(value[i]));
@@ -120,6 +121,12 @@ namespace kbinxmlcs
             }
 
             _nodeBuffer.WriteU8(0xFE);
+        }
+
+        public void Dispose()
+        {
+            _nodeBuffer?.Dispose();
+            _dataBuffer?.Dispose();
         }
     }
 }

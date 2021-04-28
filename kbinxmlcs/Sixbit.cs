@@ -56,7 +56,7 @@ namespace kbinxmlcs
                 result[i] = Charset[c];
             }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             return new string(result);
 #elif NETSTANDARD2_0
             return new string(result.ToArray());

@@ -7,7 +7,7 @@ namespace kbinxmlcs
     public static class BinaryPrimitivesExt
     {
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
         public static void WriteSingleBigEndian(Span<byte> destination, float value)
         {
             if (BitConverter.IsLittleEndian)

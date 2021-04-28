@@ -33,7 +33,7 @@ namespace kbinxmlcs
         {
             if (Stream.Position == offset)
             {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
                 var span = count <= 128
                     ? stackalloc byte[count]
                     : new byte[count];
@@ -50,7 +50,7 @@ namespace kbinxmlcs
                 var pos = Stream.Position;
                 Stream.Position = offset;
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
                 var span = count <= 128
                     ? stackalloc byte[count]
                     : new byte[count];
@@ -61,7 +61,7 @@ namespace kbinxmlcs
 #endif
                 Stream.Position = pos;
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
                 return span.ToArray();
 #elif NETSTANDARD2_0
                 return span;
@@ -191,7 +191,7 @@ namespace kbinxmlcs
 
         public string ReadString(int count)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
             return _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
 #elif NETSTANDARD2_0
             return _encoding.GetString(Read32BitAligned(count).ToArray()).TrimEnd('\0');
