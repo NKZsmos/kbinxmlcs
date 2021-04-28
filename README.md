@@ -9,7 +9,7 @@ A tool for decoding Konami's binary XML format.
 **Speed**:
 - Single-thread: around 2.4x faster
 - Multi-thread: 3x~ faster
-- 
+
 **Memory**: 
 - ~10% lower
 
@@ -18,7 +18,7 @@ A tool for decoding Konami's binary XML format.
 **Speed**:
 - Single-thread: around 1.73x faster
 - Multi-thread: around 1.73x faster
-- 
+
 **Memory**:
 - around 57% lower
 
