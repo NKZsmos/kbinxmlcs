@@ -50,12 +50,14 @@ namespace kbinxmlcs
             output.WriteU8((byte)~EncodingDictionary.ReverseEncodingMap[_encoding]);
 
             //Write node buffer length and contents.
-            output.WriteS32(_nodeBuffer.ToArray().Length);
-            output.WriteBytes(_nodeBuffer.ToArray());
+            var buffer = _nodeBuffer.ToArray();
+            output.WriteS32(buffer.Length);
+            output.WriteBytes(buffer);
 
             //Write data buffer length and contents.
-            output.WriteS32(_dataBuffer.ToArray().Length);
-            output.WriteBytes(_dataBuffer.ToArray());
+            var array = _dataBuffer.ToArray();
+            output.WriteS32(array.Length);
+            output.WriteBytes(array);
 
             return output.ToArray();
         }

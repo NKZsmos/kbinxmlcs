@@ -2,7 +2,7 @@
 
 namespace kbinxmlcs
 {
-    public class NodeType
+    internal class NodeType
     {
         public int Size { get; }
 

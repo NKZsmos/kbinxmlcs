@@ -4,7 +4,7 @@ using System.Net;
 
 namespace kbinxmlcs
 {
-    public static class Converters
+    internal static class Converters
     {
         public delegate Span<byte> StringToByteDelegate(string str);
         public delegate string ByteToStringDelegate(Span<byte> bytes);
@@ -30,7 +30,7 @@ namespace kbinxmlcs
         public static string S64ToString(Span<byte> bytes) => BitConverterHelper.GetBigEndianInt64(bytes).ToString();
         public static string SingleToString(Span<byte> bytes) => BitConverterHelper.GetBigEndianSingle(bytes).ToString("0.000000");
 #if NETSTANDARD2_0
-        public static string SingleToStringWithoutCopy(byte[] bytes) => BitConverterHelper.GetBigEndianSingleWithoutCopy(bytes).ToString("0.000000");
+        public static string SingleToStringWithoutCopy(Span<byte> bytes) => BitConverterHelper.GetBigEndianSingleWithoutCopy(bytes).ToString("0.000000");
 #endif
         public static string DoubleToString(Span<byte> bytes) => BitConverterHelper.GetBigEndianDouble(bytes).ToString("0.000000");
         public static string Ip4ToString(Span<byte>bytes) => new IPAddress(bytes.ToArray()).ToString();

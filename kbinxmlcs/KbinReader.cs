@@ -47,11 +47,12 @@ namespace kbinxmlcs
             Encoding = EncodingDictionary.EncodingMap[encodingFlag];
 
             //Get buffer lengths and load.
+            var span = new Span<byte>(buffer);
             var nodeLength = binaryBuffer.ReadS32();
-            _nodeBuffer = new NodeBuffer(buffer.Skip(8).Take(nodeLength).ToArray(), compressed, Encoding);
+            _nodeBuffer = new NodeBuffer(span.Slice(8, nodeLength).ToArray(), compressed, Encoding);
 
-            var dataLength = BitConverter.ToInt32(buffer.Skip(nodeLength + 8).Take(4).Reverse().ToArray(), 0);
-            _dataBuffer = new DataBuffer(buffer.Skip(nodeLength + 12).Take(dataLength).ToArray(), Encoding);
+            var dataLength = BitConverterHelper.GetBigEndianInt32(span.Slice(nodeLength + 8, 4));
+            _dataBuffer = new DataBuffer(span.Slice(nodeLength + 12, dataLength).ToArray(), Encoding);
             _xDocument.Declaration = new XDeclaration("1.0", Encoding.WebName, null);
         }
 
@@ -127,13 +128,13 @@ namespace kbinxmlcs
                             _currentElement.SetAttributeValue("__count", size);
                         }
 
-                        var span = new Span<byte>(_dataBuffer.ReadBytes(arraySize));
+                        var span = _dataBuffer.ReadBytes(arraySize);
                         var stringBuilder = new StringBuilder();
                         var loopCount = arraySize / propertyType.Size;
                         for (var i = 0; i < loopCount; i++)
                         {
                             var subSpan = span.Slice(i * propertyType.Size, propertyType.Size);
-                            stringBuilder.Append(propertyType.GetString(subSpan.ToArray()));
+                            stringBuilder.Append(propertyType.GetString(subSpan));
                             if (i != loopCount - 1) stringBuilder.Append(" ");
                         }
 
@@ -152,7 +153,7 @@ namespace kbinxmlcs
         {
             var xDocument = ReadLinq();
             var xmlElement = new XmlDocument();
-            xmlElement.LoadXml(xDocument.Declaration + xDocument.ToString(SaveOptions.DisableFormatting));
+            xmlElement.LoadXml(xDocument.ToStringWithDeclaration());
             return xmlElement;
         }
     }

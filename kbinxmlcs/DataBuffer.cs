@@ -12,15 +12,13 @@ namespace kbinxmlcs
         private Encoding _encoding;
         private int _pos32, _pos16, _pos8;
 
-        internal DataBuffer(byte[] buffer, Encoding encoding)
+        public DataBuffer(byte[] buffer, Encoding encoding) : base(buffer)
         {
-            _stream = new MemoryStream(buffer);
             _encoding = encoding;
         }
 
-        internal DataBuffer(Encoding encoding)
+        public DataBuffer(Encoding encoding)
         {
-            _stream = new MemoryStream();
             _encoding = encoding;
         }
 
@@ -33,15 +31,37 @@ namespace kbinxmlcs
                 _pos16 = _pos32;
         }
 
-        private byte[] ReadBytes(ref int offset, int count)
+        private Span<byte> ReadBytes(ref int offset, int count)
         {
             var buffer = new byte[count];
-            Buffer.CopyTo(offset, buffer, 0, count);
+            var span = new Span<byte>(buffer);
+            if (_stream.Position == offset)
+            {
+#if NETSTANDARD2_1
+                _stream.Read(span);
+#elif NETSTANDARD2_0
+                _stream.Read(buffer, 0, count);
+#endif
+                return span;
+            }
+            else
+            {
+                var pos = _stream.Position;
+                _stream.Position = offset;
 
-            return buffer;
+#if NETSTANDARD2_1
+                _stream.Read(span);
+#elif NETSTANDARD2_0
+                _stream.Read(buffer, 0, count);
+#endif
+
+                _stream.Position = pos;
+            }
+
+            return span;
         }
 
-        internal byte[] Read32BitAligned(int count)
+        public Span<byte> Read32BitAligned(int count)
         {
             var result = ReadBytes(ref _pos32, count);
             while (count % 4 != 0)
@@ -53,7 +73,7 @@ namespace kbinxmlcs
             return result;
         }
 
-        internal byte[] Read16BitAligned()
+        public Span<byte> Read16BitAligned()
         {
             if (_pos16 % 4 == 0)
                 _pos32 += 4;
@@ -65,7 +85,7 @@ namespace kbinxmlcs
             return result;
         }
 
-        internal byte[] Read8BitAligned()
+        public Span<byte> Read8BitAligned()
         {
             if (_pos8 % 4 == 0)
                 _pos32 += 4;
@@ -79,8 +99,8 @@ namespace kbinxmlcs
 
         public void Write32BitAligned(Span<byte> buffer)
         {
-            while (_pos32 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos32 > _stream.Length)
+                _stream.WriteByte(0);
 
             SetRange(buffer, ref _pos32);
             while (_pos32 % 4 != 0)
@@ -89,10 +109,10 @@ namespace kbinxmlcs
             Realign16_8();
         }
 
-        internal void Write16BitAligned(Span<byte> buffer)
+        public void Write16BitAligned(Span<byte> buffer)
         {
-            while (_pos16 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos16 > _stream.Length)
+                _stream.WriteByte(0);
 
             if (_pos16 % 4 == 0)
                 _pos32 += 4;
@@ -101,19 +121,19 @@ namespace kbinxmlcs
             Realign16_8();
         }
 
-        internal void Write8BitAligned(byte value)
+        public void Write8BitAligned(byte value)
         {
-            while (_pos8 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos8 > _stream.Length)
+                _stream.WriteByte(0);
 
             if (_pos8 % 4 == 0)
                 _pos32 += 4;
 
-            SetRange(new byte[] { value }, ref _pos8);
+            SetRange(new[] { value }, ref _pos8);
             Realign16_8();
         }
 
-        internal override byte[] ReadBytes(int count)
+        public override Span<byte> ReadBytes(int count)
         {
             switch (count)
             {
@@ -128,7 +148,7 @@ namespace kbinxmlcs
             }
         }
 
-        internal override void WriteBytes(Span<byte> buffer)
+        public override void WriteBytes(Span<byte> buffer)
         {
             switch (buffer.Length)
             {
@@ -146,41 +166,66 @@ namespace kbinxmlcs
             }
         }
 
-        internal void WriteString(string value)
+        public void WriteString(string value)
         {
-            var buffer = new List<byte>(_encoding.GetBytes(value));
-            buffer.Add(0);
-            WriteU32((uint)buffer.Count);
-            Write32BitAligned(buffer.ToArray());
+            var bytes = _encoding.GetBytes(value);
+            var array = new byte[bytes.Length + 1];
+            bytes.CopyTo(array, 0);
+
+            WriteU32((uint)array.Length);
+            Write32BitAligned(array);
         }
 
-        internal string ReadString(int count) => _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
+        public string ReadString(int count)
+        {
+#if NETSTANDARD2_1
+            return _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
+#elif NETSTANDARD2_0
+            return _encoding.GetString(Read32BitAligned(count).ToArray()).TrimEnd('\0');
+#endif
+        }
 
-        private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length).Where(x => x % 2 == 0)
-             .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber)).ToArray();
+        private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length)
+            .Where(x => x % 2 == 0)
+            .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber))
+            .ToArray();
 
-        internal void WriteBinary(string value)
+        public void WriteBinary(string value)
         {
             WriteU32((uint)value.Length / 2);
             Write32BitAligned(ConvertHexString(value));
         }
 
-        internal string ReadBinary(int count) => BitConverter.ToString(Read32BitAligned(count)).Replace("-", "").ToLower();
+        public string ReadBinary(int count)
+        {
+            return BitConverter.ToString(Read32BitAligned(count).ToArray()).Replace("-", "").ToLower();
+        }
 
         private void SetRange(Span<byte> buffer, ref int offset)
         {
-            if (offset == Buffer.Count())
+            if (offset == _stream.Length)
             {
-                Buffer.InsertRange(offset, buffer);
+#if NETSTANDARD2_0
+                _stream.Write(buffer.ToArray(), 0, buffer.Length);
+#elif NETSTANDARD2_1
+                _stream.Write(buffer);
+#endif
                 offset += buffer.Length;
             }
             else
             {
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    Buffer[offset] = buffer[i];
-                    offset++;
-                }
+                var pos = _stream.Position;
+                _stream.Position = offset;
+
+#if NETSTANDARD2_0
+                _stream.Write(buffer.ToArray(), 0, buffer.Length);
+#elif NETSTANDARD2_1
+                _stream.Write(buffer);
+#endif
+
+                offset += buffer.Length;
+
+                _stream.Position = pos;
             }
         }
     }

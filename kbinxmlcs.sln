@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kbinxmlcs", "kbinxmlcs\kbinxmlcs.csproj", "{967E5FD7-E971-4C5F-9170-7008DA38DBC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kbinxmlcs.Test", "kbinxmlcs.Test\kbinxmlcs.Test.csproj", "{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kbinxmlcs.Test", "kbinxmlcs.Test\kbinxmlcs.Test.csproj", "{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azisai.Utilities", "F:\GitHub\Azisai\Azisai.Utilities\Azisai.Utilities.csproj", "{0289E859-4528-4A30-B79F-E90F62397CF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B2795F2-0197-4DA5-B8E5-01C87B177EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0289E859-4528-4A30-B79F-E90F62397CF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0289E859-4528-4A30-B79F-E90F62397CF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0289E859-4528-4A30-B79F-E90F62397CF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0289E859-4528-4A30-B79F-E90F62397CF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
