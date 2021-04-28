@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -99,9 +100,21 @@ namespace kbinxmlcs
                         _dataBuffer.WriteU32(size);
                     }
 
-                    var loopCount = size / type.Size;
-                    for (var i = 0; i < loopCount; i++)
-                        _dataBuffer.WriteBytes(type.GetBytes(value[i]));
+                    using (var ms = new MemoryStream())
+                    {
+                        var loopCount = size / type.Size;
+                        for (var i = 0; i < loopCount; i++)
+                        {
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+                            ms.Write(type.GetBytes(value[i]));
+#elif NETSTANDARD2_0
+                            var buffer = type.GetBytes(value[i]).ToArray();
+                            ms.Write(buffer, 0, buffer.Length);
+#endif
+                        }
+
+                        _dataBuffer.WriteBytes(ms.ToArray());
+                    }
                 }
             }
 

@@ -220,7 +220,7 @@ namespace kbinxmlcs
             {
 #if NETSTANDARD2_0
                 Stream.Write(buffer.ToArray(), 0, buffer.Length);
-#elif NETSTANDARD2_1
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
                 Stream.Write(buffer);
 #endif
                 offset += buffer.Length;
@@ -232,7 +232,7 @@ namespace kbinxmlcs
 
 #if NETSTANDARD2_0
                 Stream.Write(buffer.ToArray(), 0, buffer.Length);
-#elif NETSTANDARD2_1
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
                 Stream.Write(buffer);
 #endif
 
