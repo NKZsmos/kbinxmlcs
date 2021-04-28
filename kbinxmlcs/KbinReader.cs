@@ -14,6 +14,9 @@ namespace kbinxmlcs
     {
         private static readonly Type TypeControlType = typeof(ControlType);
 
+        private static readonly HashSet<byte> _controlTypes =
+            new HashSet<byte>(Enum.GetValues(TypeControlType).Cast<byte>());
+
         public Encoding Encoding { get; }
 
         private readonly NodeBuffer _nodeBuffer;
@@ -71,7 +74,7 @@ namespace kbinxmlcs
                 nodeType = (byte)(nodeType & ~0x40);
                 NodeType propertyType;
 
-                if (Enum.IsDefined(TypeControlType, nodeType))
+                if (_controlTypes.Contains(nodeType))
                 {
                     switch ((ControlType)nodeType)
                     {
