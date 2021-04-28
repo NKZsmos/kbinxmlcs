@@ -40,7 +40,7 @@ namespace kbinxmlcs
             int length = ReadU8();
 
             if (_compressed)
-                return Sixbit.Decode(ReadBytes((int)Math.Ceiling(length * 6 / 8.0)).ToArray(), length);
+                return Sixbit.Decode(ReadBytes((int)Math.Ceiling(length * 6 / 8.0)), length);
 
 #if NETSTANDARD2_1
             return _encoding.GetString(ReadBytes((length & 0xBF) + 1));
