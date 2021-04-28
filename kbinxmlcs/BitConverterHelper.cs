@@ -59,59 +59,59 @@ namespace kbinxmlcs
 
         public static Span<byte> GetBigEndianBytes(ushort value)
         {
-            var array = new byte[sizeof(ushort)];
-            var span = new Span<byte>(array);
+            var length = sizeof(ushort);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteUInt16BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(short value)
         {
-            var array = new byte[sizeof(short)];
-            var span = new Span<byte>(array);
+            var length = sizeof(short);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteInt16BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(uint value)
         {
-            var array = new byte[sizeof(uint)];
-            var span = new Span<byte>(array);
+            var length = sizeof(uint);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteUInt32BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(int value)
         {
-            var array = new byte[sizeof(int)];
-            var span = new Span<byte>(array);
+            var length = sizeof(int);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteInt32BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(ulong value)
         {
-            var array = new byte[sizeof(ulong)];
-            var span = new Span<byte>(array);
+            var length = sizeof(ulong);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteUInt64BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(long value)
         {
-            var array = new byte[sizeof(long)];
-            var span = new Span<byte>(array);
+            var length = sizeof(long);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitives.WriteInt64BigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
         public static Span<byte> GetBigEndianBytes(float value)
         {
 #if NETSTANDARD2_1
-            var array = new byte[sizeof(float)];
-            var span = new Span<byte>(array);
+            var length = sizeof(float);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitivesExt.WriteSingleBigEndian(span, value);
-            return span;
+            return span.ToArray();
 #elif NETSTANDARD2_0
             return ReverseSourceArrayNonCopy(BitConverter.GetBytes(value));
 #endif
@@ -119,10 +119,10 @@ namespace kbinxmlcs
 
         public static Span<byte> GetBigEndianBytes(double value)
         {
-            var array = new byte[sizeof(double)];
-            var span = new Span<byte>(array);
+            var length = sizeof(double);
+            Span<byte> span = stackalloc byte[length];
             BinaryPrimitivesExt.WriteDoubleBigEndian(span, value);
-            return span;
+            return span.ToArray();
         }
 
 #if NETSTANDARD2_0

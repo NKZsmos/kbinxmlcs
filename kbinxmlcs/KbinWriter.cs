@@ -104,16 +104,14 @@ namespace kbinxmlcs
                 }
             }
 
-            foreach (var attribute in xElement.Attributes().OrderBy(x => x.Name.LocalName))
+            foreach (var attribute in xElement
+                .Attributes()
+                .Where(x => x.Name != "__type" && x.Name != "__size" && x.Name != "__count")
+                .OrderBy(x => x.Name.LocalName))
             {
-                if (attribute.Name != "__type" &&
-                    attribute.Name != "__size" &&
-                    attribute.Name != "__count")
-                {
-                    _nodeBuffer.WriteU8(0x2E);
-                    _nodeBuffer.WriteString(attribute.Name.LocalName);
-                    _dataBuffer.WriteString(attribute.Value);
-                }
+                _nodeBuffer.WriteU8(0x2E);
+                _nodeBuffer.WriteString(attribute.Name.LocalName);
+                _dataBuffer.WriteString(attribute.Value);
             }
 
             foreach (var childNode in xElement.Elements())

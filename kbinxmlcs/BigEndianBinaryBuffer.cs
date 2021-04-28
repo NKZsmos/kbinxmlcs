@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace kbinxmlcs
 {
@@ -22,10 +20,11 @@ namespace kbinxmlcs
         public virtual Span<byte> ReadBytes(int count)
         {
 #if NETSTANDARD2_1
-            var buffer = new byte[count];
-            var span = new Span<byte>(buffer);
+            var span = count <= 128
+                ? stackalloc byte[count]
+                : new byte[count];
             _stream.Read(span);
-            return span;
+            return span.ToArray();
 #elif NETSTANDARD2_0
             var buffer = new byte[count];
             _stream.Read(buffer, 0, count);
@@ -100,7 +99,5 @@ namespace kbinxmlcs
         }
 
         public int Length => (int)_stream.Length;
-
-        //public byte this[int index] => Buffer[index];
     }
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -33,16 +31,19 @@ namespace kbinxmlcs
 
         private Span<byte> ReadBytes(ref int offset, int count)
         {
-            var buffer = new byte[count];
-            var span = new Span<byte>(buffer);
             if (_stream.Position == offset)
             {
 #if NETSTANDARD2_1
+                var span = count <= 128
+                    ? stackalloc byte[count]
+                    : new byte[count];
                 _stream.Read(span);
+                return span.ToArray();
 #elif NETSTANDARD2_0
-                _stream.Read(buffer, 0, count);
-#endif
+                var span = new byte[count];
+                _stream.Read(span, 0, count);
                 return span;
+#endif
             }
             else
             {
@@ -50,15 +51,22 @@ namespace kbinxmlcs
                 _stream.Position = offset;
 
 #if NETSTANDARD2_1
+                var span = count <= 128
+                    ? stackalloc byte[count]
+                    : new byte[count];
                 _stream.Read(span);
 #elif NETSTANDARD2_0
-                _stream.Read(buffer, 0, count);
+                var span = new byte[count];
+                _stream.Read(span, 0, count);
 #endif
-
                 _stream.Position = pos;
-            }
 
-            return span;
+#if NETSTANDARD2_1
+                return span.ToArray();
+#elif NETSTANDARD2_0
+                return span;
+#endif
+            }
         }
 
         public Span<byte> Read32BitAligned(int count)
@@ -169,8 +177,13 @@ namespace kbinxmlcs
         public void WriteString(string value)
         {
             var bytes = _encoding.GetBytes(value);
-            var array = new byte[bytes.Length + 1];
-            bytes.CopyTo(array, 0);
+
+            var length = bytes.Length + 1;
+            var array = length <= 128
+                ? stackalloc byte[length]
+                : new byte[length];
+
+            bytes.CopyTo(array);
 
             WriteU32((uint)array.Length);
             Write32BitAligned(array);
