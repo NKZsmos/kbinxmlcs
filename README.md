@@ -40,9 +40,24 @@ public class Program
 {
     static void Main(string[] args)
     {
-        byte[] data = File.ReadAllBytes("test.bin");
-        XmlReader xmlReader = new XmlReader(data);
-        Console.WriteLine(XmlReader.Read().OuterXml);
+        byte[] data = File.ReadAllBytes("test.kbin");
+        byte[] xmlBytes;
+        Encoding encoding;
+        using (var xmlReader = new KbinReader(data))
+        {
+            xmlBytes = xmlReader.ReadXmlByte();
+            encoding = xmlReader.Encoding;
+        }
+
+        //Console.WriteLine(encoding.GetString(xmlBytes));
+
+        XElement xElement;
+        using (var memoryStream = new MemoryStream(xmlBytes))
+        {
+            xElement = XElement.Load(memoryStream);
+        }
+
+        var elements = xElement.Descendants();
     }
 }
 ```
