@@ -53,7 +53,7 @@ namespace kbinxmlcs
 #if NETSTANDARD2_0
             new byte[sizeof(short)]
 #elif NETSTANDARD2_1 || NET5_0_OR_GREATER
-            stackalloc byte[sizeof(long)]
+            stackalloc byte[sizeof(short)]
 #endif
             , value));
 
@@ -61,7 +61,7 @@ namespace kbinxmlcs
 #if NETSTANDARD2_0
             new byte[sizeof(int)]
 #elif NETSTANDARD2_1 || NET5_0_OR_GREATER
-            stackalloc byte[sizeof(long)]
+            stackalloc byte[sizeof(int)]
 #endif
             , value));
 
@@ -85,7 +85,7 @@ namespace kbinxmlcs
 #if NETSTANDARD2_0
             new byte[sizeof(ushort)]
 #elif NETSTANDARD2_1 || NET5_0_OR_GREATER
-            stackalloc byte[sizeof(long)]
+            stackalloc byte[sizeof(ushort)]
 #endif
             , value));
 
@@ -93,7 +93,7 @@ namespace kbinxmlcs
 #if NETSTANDARD2_0
             new byte[sizeof(uint)]
 #elif NETSTANDARD2_1 || NET5_0_OR_GREATER
-            stackalloc byte[sizeof(long)]
+            stackalloc byte[sizeof(uint)]
 #endif
             , value));
 
@@ -101,7 +101,7 @@ namespace kbinxmlcs
 #if NETSTANDARD2_0
             new byte[sizeof(ulong)]
 #elif NETSTANDARD2_1 || NET5_0_OR_GREATER
-            stackalloc byte[sizeof(long)]
+            stackalloc byte[sizeof(ulong)]
 #endif
             , value));
 
