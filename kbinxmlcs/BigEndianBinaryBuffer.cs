@@ -41,21 +41,69 @@ namespace kbinxmlcs
 #endif
         }
 
-        public virtual void WriteS8(sbyte value) => WriteBytes(new[] { (byte)value });
+        public virtual void WriteS8(sbyte value) => WriteBytes(
+#if NETSTANDARD2_0
+            new[] { (byte)value }
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc[] { (byte)value }
+#endif
+        );
 
-        public virtual void WriteS16(short value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteS16(short value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(short)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
-        public virtual void WriteS32(int value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteS32(int value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(int)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
-        public virtual void WriteS64(long value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteS64(long value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(long)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
-        public virtual void WriteU8(byte value) => WriteBytes(new[] { value });
+        public virtual void WriteU8(byte value) => WriteBytes(
+#if NETSTANDARD2_0
+            new[] { value }
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc[] { value }
+#endif
+        );
 
-        public virtual void WriteU16(ushort value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteU16(ushort value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(ushort)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
-        public virtual void WriteU32(uint value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteU32(uint value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(uint)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
-        public virtual void WriteU64(ulong value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(value));
+        public virtual void WriteU64(ulong value) => WriteBytes(BitConverterHelper.GetBigEndianBytes(
+#if NETSTANDARD2_0
+            new byte[sizeof(ulong)]
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+            stackalloc byte[sizeof(long)]
+#endif
+            , value));
 
         public virtual sbyte ReadS8() => (sbyte)ReadBytes(sizeof(byte))[0];
 

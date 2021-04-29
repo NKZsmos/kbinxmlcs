@@ -70,6 +70,20 @@ namespace kbinxmlcs
         }
 
         /// <summary>
+        /// Reads stream from the binary XML.
+        /// </summary>
+        /// <returns>Returns the XmlReader.</returns>
+        public XmlReader ReadStream()
+        {
+            var bytes = ReadXmlByte();
+            using (var memoryStream = new MemoryStream(bytes))
+            {
+                var xmlReader = XmlReader.Create(memoryStream, new XmlReaderSettings());
+                return xmlReader;
+            }
+        }
+
+        /// <summary>
         /// Reads all nodes in the binary XML.
         /// </summary>
         /// <returns>Returns the XDocument.</returns>
