@@ -130,6 +130,12 @@ namespace kbinxmlcs
                     switch ((ControlType)nodeType)
                     {
                         case ControlType.NodeStart:
+                            if (holdValue != null)
+                            {
+                                _xmlWriter.WriteString(holdValue);
+                                holdValue = null;
+                            }
+
                             var elementName = _nodeBuffer.ReadString();
                             _xmlWriter.WriteStartElement(elementName);
                             break;
@@ -159,6 +165,12 @@ namespace kbinxmlcs
                 }
                 else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out var propertyType))
                 {
+                    if (holdValue != null)
+                    {
+                        _xmlWriter.WriteString(holdValue);
+                        holdValue = null;
+                    }
+
                     var elementName = _nodeBuffer.ReadString();
                     _xmlWriter.WriteStartElement(elementName);
 
