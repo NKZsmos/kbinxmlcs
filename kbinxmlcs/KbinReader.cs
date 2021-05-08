@@ -163,7 +163,7 @@ namespace kbinxmlcs
                             return _writerStream.ToArray();
                     }
                 }
-                else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out var propertyType))
+                else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out propertyType))
                 {
                     if (holdValue != null)
                     {
