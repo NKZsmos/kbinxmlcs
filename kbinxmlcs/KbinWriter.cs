@@ -295,6 +295,7 @@ namespace kbinxmlcs
                     int i = 0;
                     foreach (var s in value)
                     {
+                        if (i == arr.Length) break;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
                         var buffer = type.GetBytes(s);
                         buffer.CopyTo(arr.AsSpan().Slice(i, type.Size));
