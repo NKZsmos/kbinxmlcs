@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -11,13 +10,12 @@ namespace kbinxmlcs
         private Encoding _encoding;
         private int _pos32, _pos16, _pos8;
 
-        internal DataBuffer(byte[] buffer, Encoding encoding)
+        public DataBuffer(byte[] buffer, Encoding encoding) : base(buffer)
         {
-            Buffer = buffer.ToList();
             _encoding = encoding;
         }
 
-        internal DataBuffer(Encoding encoding)
+        public DataBuffer(Encoding encoding)
         {
             _encoding = encoding;
         }
@@ -31,15 +29,47 @@ namespace kbinxmlcs
                 _pos16 = _pos32;
         }
 
-        private byte[] ReadBytes(ref int offset, int count)
+        private Span<byte> ReadBytes(ref int offset, int count)
         {
-            var buffer = new byte[count];
-            Buffer.CopyTo(offset, buffer, 0, count);
+            if (Stream.Position == offset)
+            {
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+                var span = count <= 128
+                    ? stackalloc byte[count]
+                    : new byte[count];
+                Stream.Read(span);
+                return span.ToArray();
+#elif NETSTANDARD2_0
+                var span = new byte[count];
+                Stream.Read(span, 0, count);
+                return span;
+#endif
+            }
+            else
+            {
+                var pos = Stream.Position;
+                Stream.Position = offset;
 
-            return buffer;
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+                var span = count <= 128
+                    ? stackalloc byte[count]
+                    : new byte[count];
+                Stream.Read(span);
+#elif NETSTANDARD2_0
+                var span = new byte[count];
+                Stream.Read(span, 0, count);
+#endif
+                Stream.Position = pos;
+
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+                return span.ToArray();
+#elif NETSTANDARD2_0
+                return span;
+#endif
+            }
         }
 
-        internal byte[] Read32BitAligned(int count)
+        public Span<byte> Read32BitAligned(int count)
         {
             var result = ReadBytes(ref _pos32, count);
             while (count % 4 != 0)
@@ -51,7 +81,7 @@ namespace kbinxmlcs
             return result;
         }
 
-        internal byte[] Read16BitAligned()
+        public Span<byte> Read16BitAligned()
         {
             if (_pos16 % 4 == 0)
                 _pos32 += 4;
@@ -63,7 +93,7 @@ namespace kbinxmlcs
             return result;
         }
 
-        internal byte[] Read8BitAligned()
+        public Span<byte> Read8BitAligned()
         {
             if (_pos8 % 4 == 0)
                 _pos32 += 4;
@@ -75,10 +105,10 @@ namespace kbinxmlcs
             return result;
         }
 
-        public void Write32BitAligned(byte[] buffer)
+        public void Write32BitAligned(Span<byte> buffer)
         {
-            while (_pos32 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos32 > Stream.Length)
+                Stream.WriteByte(0);
 
             SetRange(buffer, ref _pos32);
             while (_pos32 % 4 != 0)
@@ -87,10 +117,10 @@ namespace kbinxmlcs
             Realign16_8();
         }
 
-        internal void Write16BitAligned(byte[] buffer)
+        public void Write16BitAligned(Span<byte> buffer)
         {
-            while (_pos16 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos16 > Stream.Length)
+                Stream.WriteByte(0);
 
             if (_pos16 % 4 == 0)
                 _pos32 += 4;
@@ -99,19 +129,19 @@ namespace kbinxmlcs
             Realign16_8();
         }
 
-        internal void Write8BitAligned(byte value)
+        public void Write8BitAligned(byte value)
         {
-            while (_pos8 > Buffer.Count())
-                Buffer.Add(0);
+            while (_pos8 > Stream.Length)
+                Stream.WriteByte(0);
 
             if (_pos8 % 4 == 0)
                 _pos32 += 4;
 
-            SetRange(new byte[] { value }, ref _pos8);
+            SetRange(new[] { value }, ref _pos8);
             Realign16_8();
         }
 
-        internal override byte[] ReadBytes(int count)
+        public override Span<byte> ReadBytes(int count)
         {
             switch (count)
             {
@@ -126,7 +156,7 @@ namespace kbinxmlcs
             }
         }
 
-        internal override void WriteBytes(byte[] buffer)
+        public override void WriteBytes(Span<byte> buffer)
         {
             switch (buffer.Length)
             {
@@ -144,41 +174,71 @@ namespace kbinxmlcs
             }
         }
 
-        internal void WriteString(string value)
+        public void WriteString(string value)
         {
-            var buffer = new List<byte>(_encoding.GetBytes(value));
-            buffer.Add(0);
-            WriteU32((uint)buffer.Count);
-            Write32BitAligned(buffer.ToArray());
+            var bytes = _encoding.GetBytes(value);
+
+            var length = bytes.Length + 1;
+            var array = length <= 128
+                ? stackalloc byte[length]
+                : new byte[length];
+
+            bytes.CopyTo(array);
+
+            WriteU32((uint)array.Length);
+            Write32BitAligned(array);
         }
 
-        internal string ReadString(int count) => _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
+        public string ReadString(int count)
+        {
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+            return _encoding.GetString(Read32BitAligned(count)).TrimEnd('\0');
+#elif NETSTANDARD2_0
+            return _encoding.GetString(Read32BitAligned(count).ToArray()).TrimEnd('\0');
+#endif
+        }
 
-       private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length).Where(x => x % 2 == 0)
-            .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber)).ToArray();
+        private static byte[] ConvertHexString(string hexString) => Enumerable.Range(0, hexString.Length)
+            .Where(x => x % 2 == 0)
+            .Select(x => byte.Parse(hexString.Substring(x, 2), NumberStyles.HexNumber))
+            .ToArray();
 
-        internal void WriteBinary(string value)
+        public void WriteBinary(string value)
         {
             WriteU32((uint)value.Length / 2);
             Write32BitAligned(ConvertHexString(value));
         }
 
-        internal string ReadBinary(int count) => BitConverter.ToString(Read32BitAligned(count)).Replace("-", "").ToLower();
-
-        private void SetRange(byte[] buffer, ref int offset)
+        public string ReadBinary(int count)
         {
-            if (offset == Buffer.Count())
+            return BitConverter.ToString(Read32BitAligned(count).ToArray()).Replace("-", "").ToLower();
+        }
+
+        private void SetRange(Span<byte> buffer, ref int offset)
+        {
+            if (offset == Stream.Length)
             {
-                Buffer.InsertRange(offset, buffer);
+#if NETSTANDARD2_0
+                Stream.Write(buffer.ToArray(), 0, buffer.Length);
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+                Stream.Write(buffer);
+#endif
                 offset += buffer.Length;
             }
             else
             {
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    Buffer[offset] = buffer[i];
-                    offset++;
-                }
+                var pos = Stream.Position;
+                Stream.Position = offset;
+
+#if NETSTANDARD2_0
+                Stream.Write(buffer.ToArray(), 0, buffer.Length);
+#elif NETSTANDARD2_1 || NET5_0_OR_GREATER
+                Stream.Write(buffer);
+#endif
+
+                offset += buffer.Length;
+
+                Stream.Position = pos;
             }
         }
     }
