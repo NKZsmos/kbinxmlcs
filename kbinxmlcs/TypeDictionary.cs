@@ -4,7 +4,7 @@ using static kbinxmlcs.Converters;
 
 namespace kbinxmlcs
 {
-    public static class TypeDictionary
+    internal static class TypeDictionary
     {
         internal static readonly Dictionary<byte, NodeType> TypeMap = new Dictionary<byte, NodeType>()
         {
