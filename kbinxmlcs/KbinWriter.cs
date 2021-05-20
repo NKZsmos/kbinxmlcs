@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -13,6 +14,23 @@ namespace kbinxmlcs
     /// </summary>
     public class KbinWriter : IDisposable
     {
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER|| NET47_OR_GREATER
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Result
+        {
+            public bool is_error;
+            public IntPtr arr_ptr;
+            public int arr_size;
+            [MarshalAs(UnmanagedType.LPUTF8Str)]
+            public string error;
+        }
+
+        [DllImport("kbinxmlrs", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern Result encode_codepage([MarshalAs(UnmanagedType.LPUTF8Str)] string xml, int code_page);
+        [DllImport("kbinxmlrs", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern Result encode_codename([MarshalAs(UnmanagedType.LPUTF8Str)] string xml, string code_name);
+#endif
+
         private readonly XDocument _document;
         private readonly Encoding _encoding;
 
@@ -48,6 +66,19 @@ namespace kbinxmlcs
             _dataBuffer = new DataBuffer(encoding);
         }
 
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER|| NET47_OR_GREATER
+        public byte[] WriteRs()
+        {
+            var xml = _rawXml ?? _document.ToString(SaveOptions.DisableFormatting);
+            var result = encode_codepage(xml, _encoding.CodePage);
+            if (result.is_error && !string.IsNullOrEmpty(result.error))
+                throw new Exception(result.error);
+
+            var arr = new byte[result.arr_size];
+            Marshal.Copy(result.arr_ptr, arr, 0, result.arr_size);
+            return arr;
+        }
+#endif
         /// <summary>
         /// Writes all nodes in the XML document.
         /// </summary>
