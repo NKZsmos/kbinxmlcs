@@ -1,11 +1,10 @@
-﻿using static kbinxmlcs.Converters;
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using static kbinxmlcs.Converters;
 
 namespace kbinxmlcs
 {
-    public static class TypeDictionary
+    internal static class TypeDictionary
     {
         internal static readonly Dictionary<byte, NodeType> TypeMap = new Dictionary<byte, NodeType>()
         {

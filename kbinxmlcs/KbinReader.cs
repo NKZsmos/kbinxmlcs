@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -10,18 +11,23 @@ namespace kbinxmlcs
     /// <summary>
     /// Represents a reader for Konami's binary XML format.
     /// </summary>
-    public class KbinReader
+    public class KbinReader : IDisposable
     {
+        private static readonly Type TypeControlType = typeof(ControlType);
+
+        private static readonly HashSet<byte> _controlTypes =
+            new HashSet<byte>(Enum.GetValues(TypeControlType).Cast<byte>());
+
         public Encoding Encoding { get; }
 
         private readonly NodeBuffer _nodeBuffer;
         private readonly DataBuffer _dataBuffer;
 
-        private readonly XmlDocument _xmlDocument = new XmlDocument();
-        private XmlElement _currentElement;
+        private readonly XmlWriter _xmlWriter;
+        private readonly Stream _writerStream;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="XmlReader"/> class.
+        /// Initializes a new instance of the <see cref="KbinReader"/> class.
         /// </summary>
         /// <param name="buffer">An array of bytes containing the contents of a binary XML.</param>
         public KbinReader(byte[] buffer)
@@ -45,96 +51,169 @@ namespace kbinxmlcs
             Encoding = EncodingDictionary.EncodingMap[encodingFlag];
 
             //Get buffer lengths and load.
+            var span = new Span<byte>(buffer);
             var nodeLength = binaryBuffer.ReadS32();
-            _nodeBuffer = new NodeBuffer(buffer.Skip(8).Take(nodeLength).ToArray(), compressed, Encoding);
+            _nodeBuffer = new NodeBuffer(span.Slice(8, nodeLength).ToArray(), compressed, Encoding);
 
-            var dataLength = BitConverter.ToInt32(buffer.Skip(nodeLength + 8).Take(4).Reverse().ToArray(), 0);
-            _dataBuffer = new DataBuffer(buffer.Skip(nodeLength + 12).Take(dataLength).ToArray(), Encoding);
+            var dataLength = BitConverterHelper.GetBigEndianInt32(span.Slice(nodeLength + 8, 4));
+            _dataBuffer = new DataBuffer(span.Slice(nodeLength + 12, dataLength).ToArray(), Encoding);
 
-            _xmlDocument.InsertBefore(_xmlDocument.CreateXmlDeclaration("1.0", Encoding.WebName, null), _xmlDocument.DocumentElement);
+            var settings = new XmlWriterSettings
+            {
+                Async = false,
+                Encoding = Encoding,
+                Indent = false
+            };
+            _writerStream = new MemoryStream();
+            _xmlWriter = XmlWriter.Create(_writerStream, settings);
+            _xmlWriter.WriteStartDocument();
         }
-        
+
+        /// <summary>
+        /// Reads stream from the binary XML.
+        /// </summary>
+        /// <returns>Returns the XmlReader.</returns>
+        public XmlReader ReadStream()
+        {
+            var bytes = ReadXmlByte();
+            using (var memoryStream = new MemoryStream(bytes))
+            {
+                var xmlReader = XmlReader.Create(memoryStream, new XmlReaderSettings());
+                return xmlReader;
+            }
+        }
+
         /// <summary>
         /// Reads all nodes in the binary XML.
         /// </summary>
-        /// <returns>Returns the XML document.</returns>
+        /// <returns>Returns the XDocument.</returns>
+        public XDocument ReadLinq()
+        {
+            var bytes = ReadXmlByte();
+            using (var memoryStream = new MemoryStream(bytes))
+            {
+                return XDocument.Load(memoryStream);
+            }
+        }
+
+
+        /// <summary>
+        /// Reads all nodes in the binary XML.
+        /// </summary>
+        /// <returns>Returns the XmlDocument.</returns>
+        [Obsolete("Poor performance. Use \"" + nameof(ReadLinq) + "()\" instead.")]
         public XmlDocument Read()
         {
+            var bytes = ReadXmlByte();
+            using (var memoryStream = new MemoryStream(bytes))
+            {
+                var xmlElement = new XmlDocument();
+                xmlElement.Load(memoryStream);
+                return xmlElement;
+            }
+        }
+
+        public byte[] ReadXmlByte()
+        {
+            string holdValue = null;
             while (true)
             {
                 var nodeType = _nodeBuffer.ReadU8();
 
                 //Array flag is on the second bit
-                var array = (nodeType & 64) > 0;
-                nodeType = (byte)(nodeType & ~64);
+                var array = (nodeType & 0x40) > 0;
+                nodeType = (byte)(nodeType & ~0x40);
+                NodeType propertyType;
 
-                if (Enum.IsDefined(typeof(ControlType), nodeType))
+                if (_controlTypes.Contains(nodeType))
                 {
                     switch ((ControlType)nodeType)
                     {
                         case ControlType.NodeStart:
-                            var newElement = _xmlDocument.CreateElement
-                                (_nodeBuffer.ReadString(), null);
+                            if (holdValue != null)
+                            {
+                                _xmlWriter.WriteString(holdValue);
+                                holdValue = null;
+                            }
 
-                            if (_currentElement != null)
-                                _currentElement.AppendChild(newElement);
-                            else
-                                _xmlDocument.AppendChild(newElement);
-
-                            _currentElement = newElement;
+                            var elementName = _nodeBuffer.ReadString();
+                            _xmlWriter.WriteStartElement(elementName);
                             break;
 
                         case ControlType.Attribute:
+                            var attr = _nodeBuffer.ReadString();
                             var value = _dataBuffer.ReadString(_dataBuffer.ReadS32());
-                            _currentElement.SetAttribute(_nodeBuffer.ReadString(), value);
+                            _xmlWriter.WriteStartAttribute(attr);
+                            _xmlWriter.WriteString(value);
+                            _xmlWriter.WriteEndAttribute();
                             break;
 
                         case ControlType.NodeEnd:
-                            if (_currentElement.ParentNode is XmlDocument)
-                                return _xmlDocument;
+                            if (holdValue != null)
+                            {
+                                _xmlWriter.WriteString(holdValue);
+                                holdValue = null;
+                            }
 
-                            _currentElement = (XmlElement)_currentElement.ParentNode;
+                            _xmlWriter.WriteEndElement();
                             break;
 
                         case ControlType.FileEnd:
-                            return _xmlDocument;
+                            _xmlWriter.Flush();
+                            return _writerStream.ToArray();
                     }
                 }
-                else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out var propertyType))
+                else if (TypeDictionary.TypeMap.TryGetValue(nodeType, out propertyType))
                 {
+                    if (holdValue != null)
+                    {
+                        _xmlWriter.WriteString(holdValue);
+                        holdValue = null;
+                    }
+
                     var elementName = _nodeBuffer.ReadString();
-                    _currentElement = (XmlElement)_currentElement.AppendChild(_xmlDocument.CreateElement(elementName));
+                    _xmlWriter.WriteStartElement(elementName);
 
-                    var attribute = _xmlDocument.CreateAttribute("__type");
-                    attribute.Value = propertyType.Name;
-                    _currentElement.Attributes.Append(attribute);
+                    _xmlWriter.WriteStartAttribute("__type");
+                    _xmlWriter.WriteString(propertyType.Name);
+                    _xmlWriter.WriteEndAttribute();
 
-                    var arraySize = propertyType.Size * propertyType.Count;
+                    int arraySize;
                     if (array || propertyType.Name == "str" || propertyType.Name == "bin")
                         arraySize = _dataBuffer.ReadS32(); //Total size.
+                    else
+                        arraySize = propertyType.Size * propertyType.Count;
 
                     if (propertyType.Name == "str")
-                        _currentElement.InnerText = _dataBuffer.ReadString(arraySize);
+                        holdValue = _dataBuffer.ReadString(arraySize);
                     else if (propertyType.Name == "bin")
                     {
-                        _currentElement.InnerText = _dataBuffer.ReadBinary(arraySize);
-                        _currentElement.SetAttribute("__size", arraySize.ToString());
+                        _xmlWriter.WriteStartAttribute("__size");
+                        _xmlWriter.WriteString(arraySize.ToString());
+                        _xmlWriter.WriteEndAttribute();
+                        holdValue = _dataBuffer.ReadBinary(arraySize);
                     }
                     else
                     {
                         if (array)
                         {
                             var size = (arraySize / (propertyType.Size * propertyType.Count)).ToString();
-                            _currentElement.SetAttribute("__count", size);
+                            _xmlWriter.WriteStartAttribute("__count");
+                            _xmlWriter.WriteString(size);
+                            _xmlWriter.WriteEndAttribute();
                         }
-                        var buffer = _dataBuffer.ReadBytes(arraySize);
-                        var result = new List<string>();
 
-                        for (var i = 0; i < arraySize / propertyType.Size; i++)
-                            result.Add(propertyType.ToString(buffer.Skip(i * propertyType.Size)
-                                .Take(propertyType.Size).ToArray()));
-                        _currentElement.InnerText = string.Join(" ", result);
-                        
+                        var span = _dataBuffer.ReadBytes(arraySize);
+                        var stringBuilder = new StringBuilder();
+                        var loopCount = arraySize / propertyType.Size;
+                        for (var i = 0; i < loopCount; i++)
+                        {
+                            var subSpan = span.Slice(i * propertyType.Size, propertyType.Size);
+                            stringBuilder.Append(propertyType.GetString(subSpan));
+                            if (i != loopCount - 1) stringBuilder.Append(" ");
+                        }
+
+                        holdValue = stringBuilder.ToString();
                     }
                 }
                 else
@@ -144,10 +223,12 @@ namespace kbinxmlcs
             }
         }
 
-        /// <summary>
-        /// Reads all nodes in the binary XML.
-        /// </summary>
-        /// <returns>Returns the XML document.</returns>
-        public XDocument ReadLinq() => XDocument.Parse(Read().OuterXml);
+        public void Dispose()
+        {
+            _nodeBuffer?.Dispose();
+            _dataBuffer?.Dispose();
+            _xmlWriter?.Dispose();
+            _writerStream?.Dispose();
+        }
     }
 }
