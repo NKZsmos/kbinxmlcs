@@ -15,8 +15,8 @@ namespace kbinxmlcs.Test
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            //TestRead();
-            TestWrite();
+            TestRead();
+            //TestWrite();
         }
 
         private static void TestRead()
@@ -68,38 +68,24 @@ namespace kbinxmlcs.Test
         private static void TestWrite()
         {
             var sw = Stopwatch.StartNew();
-            //var baseFolder = @"G:\GitHub\kbinxml-rs";
-            var baseFolder = @".";
-            var file = Path.Combine(baseFolder, "common.get_music_info.xml");
-            var xmlText = File.ReadAllText(file);
+            var xmlText = File.ReadAllText("test.xml");
             Console.WriteLine("Read file: " + sw.Elapsed);
 
             sw.Restart();
             XDocument xDocument = XDocument.Parse(xmlText);
             Console.WriteLine("Parse: " + sw.Elapsed);
 
-            int count = 300;
-            object listLock = new object();
-            var list = new List<object>();
+
+            int count = 10;
 
             sw.Restart();
+            object listLock = new object();
+            var list = new List<object>();
+            //var kbinWriter = new KbinWriter(xDocument, KbinEncodings.ShiftJIS.ToEncoding());
+            //byte[] bytes1 = kbinWriter.Write();
             new int[count - 1 + 1].AsParallel().WithDegreeOfParallelism(Environment.ProcessorCount + 1).ForAll(k =>
             {
-                var kbinWriter = new KbinWriter(xmlText, KbinEncodings.ShiftJIS.ToEncoding());
-                var allBytes = kbinWriter.WriteRs();
-                lock (listLock)
-                {
-                    list.Add(kbinWriter);
-                    list.Add(allBytes);
-                }
-            });
-            Console.WriteLine($"p/invoke writer {count} time(s): " + sw.Elapsed);
-            Console.ReadKey(true);
-            list.Clear();
-            sw.Restart();
-            new int[count - 1 + 1].AsParallel().WithDegreeOfParallelism(Environment.ProcessorCount + 1).ForAll(k =>
-            {
-                var kbinWriter = new KbinWriter(xmlText, KbinEncodings.ShiftJIS.ToEncoding());
+                var kbinWriter = new KbinWriter(xDocument, KbinEncodings.ShiftJIS.ToEncoding());
                 var allBytes = kbinWriter.Write();
                 lock (listLock)
                 {
@@ -107,22 +93,8 @@ namespace kbinxmlcs.Test
                     list.Add(allBytes);
                 }
             });
-            Console.WriteLine($"legacy writer {count} time(s): " + sw.Elapsed);
-            Console.ReadKey(true);
-            list.Clear();
-            sw.Restart();
-            new int[count - 1 + 1].AsParallel().WithDegreeOfParallelism(Environment.ProcessorCount + 1).ForAll(k =>
-            {
-                XDocument xDoc = XDocument.Parse(xmlText);
-                var kbinWriter = new KbinWriter(xDoc, KbinEncodings.ShiftJIS.ToEncoding());
-                var allBytes = kbinWriter.Write();
-                lock (listLock)
-                {
-                    list.Add(kbinWriter);
-                    list.Add(allBytes);
-                }
-            });
-            Console.WriteLine($"legacy writer with linq {count} time(s): " + sw.Elapsed);
+
+            Console.WriteLine($"new writer {count} time(s): " + sw.Elapsed);
 
             Console.ReadKey(true);
         }
