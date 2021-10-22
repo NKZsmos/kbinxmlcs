@@ -1,8 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Running;
 
@@ -12,41 +16,137 @@ namespace PerformanceTest
     {
         static void Main(string[] args)
         {
-            var xp = new CsvExporter(CsvSeparator.CurrentCulture);
+            var xp = MarkdownExporter.GitHub;
 
-            var summary = BenchmarkRunner.Run<ReadingTask>(ManualConfig
-                .Create(new DebugBuildConfig())
+            var summary = BenchmarkRunner.Run<ReadingTask>(DefaultConfig
+                .Instance
                 .AddExporter(xp)
-                .AddDiagnoser(new MemoryDiagnoser(new MemoryDiagnoserConfig()))
             );
         }
     }
 
-    internal class ReadingTask
+    public class ReadingTask
     {
-        private readonly string _text;
+        private readonly byte[] _bytes;
+        private readonly byte[] _bytesLarge;
+        private readonly Type _readerOld;
+        private readonly Type _readerNew;
 
         public ReadingTask()
         {
-            _text = File.ReadAllText(
-                @"D:\GitHub\ReOsuStoryboardPlayer\ReOsuStoryboardPlayer.Core.UnitTest\TestData\IOSYS feat. 3L - Miracle-Hinacle (_lolipop).osb");
-            var ctx = new System.Runtime.Loader.AssemblyLoadContext("old", false);
-            var asm1 = ctx.LoadFromAssemblyPath(@"D:\GitHub\Coosu\Tests\CoosuTest\V1.0.0.0\Coosu.Storyboard.dll");
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            _bytes = File.ReadAllBytes(@"data\test_case.bin");
+            _bytesLarge = File.ReadAllBytes(@"data\test_case2.bin");
+            var ctxOld = new System.Runtime.Loader.AssemblyLoadContext("original", false);
+            var asm1 = ctxOld.LoadFromAssemblyPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                @"original\kbinxmlcs.dll"));
+            _readerOld = asm1.GetType("kbinxmlcs.KbinReader");
+
+            var ctxNew = new System.Runtime.Loader.AssemblyLoadContext("nkzsmos", false);
+            var asm2 = ctxNew.LoadFromAssemblyPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                @"nkzsmos\kbinxmlcs.dll"));
+            _readerNew = asm2.GetType("kbinxmlcs.KbinReader");
 
         }
 
         [Benchmark]
-        public object? CommonKbinxmlcs()
+        public object? Original_400KB()
         {
-            var o = _method1?.Invoke(null, new object?[] { _text });
-            return o;
+            var instance = Activator.CreateInstance(_readerOld, _bytes);
+            var type = instance.GetType();
+            var method = type.GetMethod("Read");
+            return method.Invoke(instance, null);
         }
 
         [Benchmark]
-        public object? NKZsmosKbinxmlcs()
+        public object? NKZsmos_400KB()
         {
-            var o = _method2?.Invoke(null, new object?[] { _text });
-            return o;
+            var instance = Activator.CreateInstance(_readerNew, _bytes);
+            var type = instance.GetType();
+            var method = type.GetMethod("ReadLinq");
+            return method.Invoke(instance, null);
+        }
+
+        [Benchmark]
+        public object? Original_400KB_16Threads()
+        {
+            return new byte[16]
+                .AsParallel()
+                .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_400KB_16Threads()
+        {
+            return new byte[16]
+                .AsParallel()
+                .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? Original_3300KB()
+        {
+            var instance = Activator.CreateInstance(_readerOld, _bytesLarge);
+            var type = instance.GetType();
+            var method = type.GetMethod("Read");
+            return method.Invoke(instance, null);
+        }
+
+        [Benchmark]
+        public object? NKZsmos_3300KB()
+        {
+            var instance = Activator.CreateInstance(_readerNew, _bytesLarge);
+            var type = instance.GetType();
+            var method = type.GetMethod("ReadLinq");
+            return method.Invoke(instance, null);
+        }
+
+        [Benchmark]
+        public object? Original_3300KB_16Threads()
+        {
+            return new byte[16]
+                .AsParallel()
+                .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_3300KB_16Threads()
+        {
+            return new byte[16]
+                .AsParallel()
+                .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
         }
     }
 }

@@ -116,7 +116,7 @@ namespace kbinxmlcs.Test
         private static void TestWrite()
         {
             var sw = Stopwatch.StartNew();
-            var xmlText = File.ReadAllText("test.xml");
+            var xmlText = File.ReadAllText(@"D:\GitHub\kbinxmlcs\PerformanceTest\data\test_case2.xml");
             Console.WriteLine("Read file: " + sw.Elapsed);
 
             sw.Restart();
@@ -124,7 +124,7 @@ namespace kbinxmlcs.Test
             Console.WriteLine("Parse: " + sw.Elapsed);
 
 
-            int count = 10;
+            int count = 1;
 
             sw.Restart();
             object listLock = new object();
@@ -143,7 +143,7 @@ namespace kbinxmlcs.Test
             });
 
             Console.WriteLine($"new writer {count} time(s): " + sw.Elapsed);
-
+            File.WriteAllBytes(@"D:\GitHub\kbinxmlcs\PerformanceTest\data\test_case2.bin", (byte[])list[1]);
             Console.ReadKey(true);
         }
 
