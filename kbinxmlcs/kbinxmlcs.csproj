@@ -2,11 +2,15 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
-    <Version>1.1.0</Version>
+    <Version>1.101.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(Configuration) == 'Release' And $(TargetFramework) == 'netstandard2.0'">
+    <Exec Command="copy $(OutputPath)kbinxmlcs.dll $(ProjectDir)..\PerformanceTest\nkzsmos " />
+  </Target>
 
 </Project>

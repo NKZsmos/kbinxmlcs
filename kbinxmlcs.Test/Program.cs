@@ -15,8 +15,56 @@ namespace kbinxmlcs.Test
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            TestRead();
-            //TestWrite();
+            //var xmls = File.ReadAllText(@"D:\GitHub\kbinxmlcs\PerformanceTest\data\original.xml");
+
+            //var dic = new Dictionary<string, string>();
+            //var i = 0;
+            //var xDocument = XDocument.Parse(xmls);
+            //LoopConfuse(xDocument.Root, dic, ref i);
+            //var test = xDocument.ToStringWithDeclaration(SaveOptions.None);
+            //File.WriteAllText(@"D:\GitHub\kbinxmlcs\PerformanceTest\data\test_case.xml", test);
+            //TestRead();
+            TestWrite();
+        }
+
+        private static void LoopConfuse(XElement x, Dictionary<string, string> dic, ref int i)
+        {
+            if (!dic.TryGetValue(x.Name.LocalName, out var val))
+            {
+                var newName = "confuse__a" + i;
+                dic.Add(x.Name.LocalName, newName);
+                x.Name = newName;
+                i++;
+            }
+            else
+            {
+                x.Name = val;
+            }
+
+            if (x.Name.LocalName is
+                "confuse__a13" or
+                "confuse__a41" or
+                "confuse__a42" or
+                "confuse__a45" or
+                "confuse__a46" or
+                "confuse__a47" or
+                "confuse__a48" or
+                "confuse__a49" or
+                "confuse__a50" or
+                "confuse__a51" or
+                "confuse__a42" or
+                "confuse__a76" or
+                "confuse__a77" or
+                "confuse__a78" or
+                "confuse__a79")
+            {
+                x.Value = x.Name.LocalName + "+" + x.Name.LocalName + "+" + x.Name.LocalName;
+            }
+
+            foreach (var element in x.Elements())
+            {
+                LoopConfuse(element, dic, ref i);
+            }
         }
 
         private static void TestRead()
