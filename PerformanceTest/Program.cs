@@ -20,6 +20,7 @@ namespace PerformanceTest
 
             var summary = BenchmarkRunner.Run<ReadingTask>(DefaultConfig
                 .Instance
+                .AddDiagnoser(new MemoryDiagnoser(new MemoryDiagnoserConfig()))
                 .AddExporter(xp)
             );
         }
@@ -68,9 +69,41 @@ namespace PerformanceTest
         }
 
         [Benchmark]
-        public object? Original_400KB_16Threads()
+        public object? Original_400KB_8ThreadsX24()
         {
-            return new byte[16]
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(8)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_400KB_8ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(8)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? Original_400KB_16ThreadsX24()
+        {
+            return new byte[24]
                 .AsParallel()
                 .WithDegreeOfParallelism(16)
                 .Select(k =>
@@ -84,11 +117,43 @@ namespace PerformanceTest
         }
 
         [Benchmark]
-        public object? NKZsmos_400KB_16Threads()
+        public object? NKZsmos_400KB_16ThreadsX24()
         {
-            return new byte[16]
+            return new byte[24]
                 .AsParallel()
                 .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? Original_400KB_24ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(24)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytes);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_400KB_24ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(24)
                 .Select(k =>
                 {
                     var instance = Activator.CreateInstance(_readerNew, _bytes);
@@ -118,9 +183,41 @@ namespace PerformanceTest
         }
 
         [Benchmark]
-        public object? Original_3300KB_16Threads()
+        public object? Original_3300KB_8ThreadsX24()
         {
-            return new byte[16]
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(8)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_3300KB_8ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(8)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? Original_3300KB_16ThreadsX24()
+        {
+            return new byte[24]
                 .AsParallel()
                 .WithDegreeOfParallelism(16)
                 .Select(k =>
@@ -134,11 +231,43 @@ namespace PerformanceTest
         }
 
         [Benchmark]
-        public object? NKZsmos_3300KB_16Threads()
+        public object? NKZsmos_3300KB_16ThreadsX24()
         {
-            return new byte[16]
+            return new byte[24]
                 .AsParallel()
                 .WithDegreeOfParallelism(16)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerNew, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("ReadLinq");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? Original_3300KB_24ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(24)
+                .Select(k =>
+                {
+                    var instance = Activator.CreateInstance(_readerOld, _bytesLarge);
+                    var type = instance.GetType();
+                    var method = type.GetMethod("Read");
+                    return method.Invoke(instance, null);
+                })
+                .ToArray();
+        }
+
+        [Benchmark]
+        public object? NKZsmos_3300KB_24ThreadsX24()
+        {
+            return new byte[24]
+                .AsParallel()
+                .WithDegreeOfParallelism(24)
                 .Select(k =>
                 {
                     var instance = Activator.CreateInstance(_readerNew, _bytesLarge);
